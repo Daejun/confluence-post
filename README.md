@@ -1,24 +1,56 @@
 # confluence-post
 
+Confluence Data Center에 올릴 문서를 **storage format(XHTML)** 으로 만드는 Claude Code
+스킬. 만들어진 조각을 페이지의 **Edit Source** 에 그대로 넣는다.
+
+DC는 Cloud의 fabric 에디터가 아니라 legacy 에디터 + storage format을 쓴다. markdown을
+그대로 붙여넣으면 표부터 깨지고, wiki markup에는 단일 개행 처리와 `_` `|` 이스케이프
+함정이 있다. Edit Source로 가면 둘 다 우회한다.
+
+규칙은 추측이 아니라 **실제 DC 인스턴스에서 렌더링을 실측해** 정했다. 근거는 `probe/`.
+
 ## 설치
+
+Claude Code 안에서:
 
 ```
 /plugin marketplace add Daejun/confluence-post
 /plugin install confluence-post@confluence-post
 ```
 
-`/plugin update confluence-post` 로 갱신한다.
+갱신은 `/plugin update confluence-post`, 제거는 `/plugin uninstall confluence-post`.
+재시작은 필요 없다.
 
-스킬을 직접 고치면서 쓰려면 플러그인 대신 clone + symlink 를 쓴다. 저장소를 고치는 즉시
-반영된다(두 방식을 같이 쓰면 스킬이 둘로 잡히니 하나만 고른다).
+설치됐는지 보려면 `/plugin` 을 열어 목록에서 확인하거나, 아래처럼 불러본다.
+
+```
+컨플루언스에 올릴 문서로 바꿔줘
+```
+
+### 고쳐가며 쓸 때는 clone + symlink
+
+플러그인은 사본을 받아오므로 스킬을 손보려면 `/plugin update` 를 거쳐야 한다.
+직접 고치면서 쓸 거면 symlink 를 쓴다 — 저장소를 고치는 즉시 반영된다.
 
 ```bash
 git clone https://github.com/Daejun/confluence-post.git ~/confluence
 ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skills/confluence-post
 ```
 
-사내 Confluence(Data Center)에 문서를 올릴 때 쓰는 **문법 가이드 스킬**과, 그 근거가 된
-렌더링 실측 probe.
+**둘 중 하나만 쓴다.** 같이 쓰면 같은 스킬이 두 번 잡힌다.
+
+### 요구사항
+
+- Confluence **Data Center**. Cloud는 storage format이 달라 대상이 아니다.
+- 페이지의 **Edit Source**(소스 편집)에 접근 권한이 있어야 한다. 읽기 전용이면 못 쓴다.
+- `check.py` 실행에 python3. 표준 라이브러리만 쓴다.
+
+## 쓰는 법
+
+markdown 파일을 주면 변환하고, 없으면 새로 쓴다. 산출물은 `out/<slug>.xhtml` 한 장이다.
+`check.py` 를 통과하지 않은 것은 내주지 않는다. 게시 전에 초안을 보여주고 승인을 받는다.
+
+분량이 곧 옮겨 적는 비용이라 줄 수·문자 수를 함께 보고한다.
 
 ## 확정된 것 (2026-08-28 실측)
 
