@@ -48,6 +48,16 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 문법 규칙과 쓰지 않는 것은 `reference/plantuml.md` 에 있다 — 도식을 낼 때 그 파일을 읽는다.
 소스가 평문이라 XHTML 안에 그대로 담긴다.
 
+**도식을 낼 때 jar 이 없으면 먼저 받는다.** 사내와 같은 1.2024.8 을 받아두면 check.py 가
+서버에 넣기 전에 문법 오류를 잡는다. 한 줄로 알리고 돌린다(여러 번 돌려도 안전하다).
+
+```bash
+bash "$SKILL_DIR/scripts/setup.sh"
+```
+
+java 가 없으면 스크립트가 설치 명령을 알려준다. 그건 root 가 필요해 사용자가 직접
+실행해야 한다. graphviz 는 로컬 검사에 없어도 되지만 있으면 좋다.
+
 ```xml
 <ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
 A -> B: write

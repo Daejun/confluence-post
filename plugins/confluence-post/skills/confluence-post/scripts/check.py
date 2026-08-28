@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 
 # probe(2026-08-28)로 렌더링을 직접 확인한 매크로. 그대로 써도 된다.
@@ -162,26 +163,39 @@ def plantuml_jar():
 
 
 def render_check(src):
+    """사내와 같은 버전의 jar 이 있으면 실제로 파싱시켜 본다.
+
+    -checkonly 는 파일 입력에서만 동작한다. -pipe 는 오류가 나도 오류 이미지를
+    내고 0으로 끝나므로 쓸 수 없다. 오류 시 종료 코드 200.
+    """
     jar = plantuml_jar()
     if not jar or not shutil.which("java"):
         return
-    try:
-        r = subprocess.run(["java", "-jar", jar, "-checkonly", "-pipe"],
-                           input=src.encode(), capture_output=True, timeout=60)
-    except (subprocess.TimeoutExpired, OSError) as e:
-        warn(f"plantuml: 문법 검사를 못 돌렸다 ({e.__class__.__name__})")
-        return
+    with tempfile.TemporaryDirectory() as d:
+        f = os.path.join(d, "d.puml")
+        with open(f, "w", encoding="utf-8") as fh:
+            fh.write(src if src.endswith("\n") else src + "\n")
+        try:
+            r = subprocess.run(["java", "-jar", jar, "-checkonly", f],
+                               capture_output=True, timeout=120, cwd=d)
+        except (subprocess.TimeoutExpired, OSError) as e:
+            warn(f"plantuml: 문법 검사를 못 돌렸다 ({e.__class__.__name__})")
+            return
     if r.returncode != 0:
-        msg = (r.stderr or r.stdout).decode(errors="replace").strip().splitlines()
-        err("plantuml: 문법 오류 — " + (msg[0] if msg else f"exit {r.returncode}"))
+        head = next((l.strip() for l in src.splitlines()
+                     if l.strip() and not l.strip().startswith("@")), "")
+        detail = (r.stdout or r.stderr).decode(errors="replace").strip()
+        err(f"plantuml: {PLANTUML_VERSION} 가 파싱하지 못했다"
+            + (f" (`{head[:40]}` 가 든 도식)" if head else "")
+            + (f" — {detail.splitlines()[0]}" if detail else ""))
 
 
 def main(path):
     raw = open(path, encoding="utf-8").read()
     print(f"{path}: {raw.count(chr(10)) + 1}줄, {len(raw)}자")
     if "plantuml" in raw and not plantuml_jar():
-        print(f"참고: PLANTUML_JAR 이 없어 문법 검사를 건너뛴다 "
-              f"(사내 서버는 {PLANTUML_VERSION})")
+        print(f"참고: plantuml.jar 이 없어 문법 검사를 건너뛴다. "
+              f"scripts/setup.sh 를 돌리면 사내와 같은 {PLANTUML_VERSION} 을 받는다")
 
     for kind, ln, msg in check_text(raw):
         (err if kind == "E" else warn)(f"{ln}줄: {msg}")
