@@ -1,0 +1,249 @@
+h1. Confluence DC 문법 probe (wiki markup)
+
+{toc:maxLevel=3}
+
+----
+
+h2. P01 제목 단계
+
+h3. P01-3 h3 제목
+h4. P01-4 h4 제목
+
+h2. P02 줄바꿈
+
+이 문장과
+이 문장은 단일 개행으로만 나뉘어 있다.
+
+이 문단은 빈 줄 뒤에 온다.
+
+h2. P03 인라인 서식
+
+*굵게* / _기울임_ / -취소선- / +밑줄+ / {{monospace}} / ^위첨자^ / ~아래첨자~
+
+h2. P04 이스케이프와 식별자
+
+이스케이프 함: mtfs\_zone\_alloc(), \*not bold\*, \{code\}, \[not a link\]
+
+이스케이프 안 함: mtfs_zone_alloc(), *not bold*, [not a link]
+
+monospace 안의 밑줄: {{mtfs_zone_alloc()}} 과 {{f2fs_gc()}}
+
+h2. P05 목록
+
+* 1단계 불릿
+** 2단계 불릿
+*** 3단계 불릿
+
+# 1단계 번호
+## 2단계 번호
+# 다시 1단계 (번호가 2로 이어지는가)
+
+#* 번호 밑에 불릿
+
+h2. P06 목록 안의 코드 블록
+
+* 항목 하나
+* 항목 둘
+{code:language=bash}
+mkfs.mtfs -z 48M /dev/nvme0n1p3
+{code}
+* 항목 셋 (목록이 끊겼는가)
+
+h2. P07 표 기본
+
+||항목||f2fs||mtfs||비고||
+|rand write IOPS|12,400|18,900|4K, QD32|
+|평균 지연|2.1 ms|1.4 ms| |
+|*굵은 셀*|_기울임 셀_|{{mono 셀}}|서식이 셀 안에서 먹는가|
+
+h2. P08 표 셀 안의 파이프와 코드
+
+||명령||설명||
+|dmesg \| grep mtfs|이스케이프한 파이프|
+|{{a || b}}|이스케이프 안 한 파이프 (표가 깨지는가)|
+
+h2. P09 넓은 표 (8열)
+
+||col1||col2||col3||col4||col5||col6||col7||col8||
+|4096|zone=48M|seq_write|118.4 MB/s|p99=8.2ms|kernel 6.6|nvme0n1p3|mount -o discard|
+|8192|zone=48M|rand_write|31.9 MB/s|p99=21.7ms|kernel 6.6|nvme0n1p3|mount -o discard|
+
+h2. P10 code macro: cpp
+
+{code:language=cpp|title=fs/mtfs/gc.c|linenumbers=true}
+static int mtfs_gc_zone(struct mtfs_sb_info *sbi, unsigned int zno)
+{
+	struct mtfs_zone *z = &sbi->zones[zno];
+
+	if (z->valid_blocks == 0)
+		return 0;
+	return migrate_zone(sbi, z);
+}
+{code}
+
+h2. P11 code macro: 존재하지 않을 수 있는 언어
+
+{code:language=c}
+/* language=c 가 드롭다운에 있는가 */
+int main(void) { return 0; }
+{code}
+
+{code:language=rust}
+fn main() {}
+{code}
+
+{code:language=json}
+{"zone_size": "48M"}
+{code}
+
+{code:language=go}
+func main() {}
+{code}
+
+h2. P12 code macro: bash / diff / yaml / text
+
+{code:language=bash}
+sudo mount -t mtfs -o discard /dev/nvme0n1p3 /mnt/scratch
+{code}
+
+{code:language=diff}
+--- a/fs/mtfs/segment.c
++++ b/fs/mtfs/segment.c
+@@ -120,7 +120,7 @@
+-	if (zone->valid == 0)
++	if (zone->valid_blocks == 0)
+ 		return -EINVAL;
+{code}
+
+{code:language=yaml}
+zone_size: 48M
+discard: true
+{code}
+
+{code:language=text}
+언어 지정 없는 평문
+{code}
+
+h2. P13 noformat (ASCII 도식)
+
+{noformat}
++---------+---------+---------+
+| zone 0  | zone 1  | zone 2  |
+| 48M     | 48M     | 48M     |
++---------+---------+---------+
+     ^ write pointer
+{noformat}
+
+h2. P14 패널 매크로
+
+{info:title=info 패널}
+정보 패널 본문.
+{info}
+
+{note}
+note 패널 본문.
+{note}
+
+{warning:title=주의}
+warning 패널 본문.
+{warning}
+
+{tip}
+tip 패널 본문.
+{tip}
+
+{panel:title=일반 panel|borderStyle=solid}
+panel 매크로 본문.
+{panel}
+
+h2. P15 expand (접기)
+
+{expand:title=벤치 원본 로그 펼치기}
+여기에 긴 로그가 들어간다.
+{code:language=text}
+fio: (groupid=0, jobs=4): err= 0: pid=1234
+{code}
+접힌 영역 안에 code macro가 들어가는가.
+{expand}
+
+h2. P16 status 매크로
+
+상태: {status:colour=Green|title=MERGED} / {status:colour=Red|title=BLOCKED} / {status:colour=Yellow|title=REVIEW}
+
+h2. P17 인용
+
+{quote}
+인용 블록 본문.
+{quote}
+
+bq. bq. 로 쓴 한 줄 인용
+
+h2. P18 링크
+
+외부 링크: [GitHub PR|https://github.com/example/repo/pull/1]
+
+맨 URL 자동 링크: https://github.com/example/repo/pull/1
+
+내부 페이지 링크: [Confluence DC 문법 probe (wiki markup)]
+
+앵커로 가기: [#probe-anchor]
+
+{anchor:probe-anchor}
+앵커 도착 지점.
+
+h2. P19 가로줄
+
+----
+
+h2. P20 이미지 (첨부 없음)
+
+첨부하지 않은 이미지: !zone-layout.png!
+
+크기 지정: !zone-layout.png|width=400!
+
+h2. P21 설치 앱 확인용 매크로
+
+{plantuml}
+@startuml
+A -> B: write
+@enduml
+{plantuml}
+
+{drawio:diagramName=test}
+
+{mermaid}
+graph TD; A-->B;
+{mermaid}
+
+{latex}
+E = mc^2
+{latex}
+
+{jira:key=MTFS-1}
+
+h2. P22 없는 매크로가 어떻게 보이는가
+
+{thismacrodoesnotexist}
+본문
+{thismacrodoesnotexist}
+
+h2. P23 체크박스 / 작업 목록
+
+- [ ] markdown 체크박스가 되는가
+- [x] 두 번째
+
+h2. P24 특수문자 그대로
+
+역슬래시 \ 백틱 ` 물결 ~ 캐럿 ^ 중괄호 { } 대괄호 [ ] 파이프 |
+
+h2. P25 한글과 영문 혼용 code block
+
+{code:language=cpp}
+/* zone 할당: valid_blocks가 0이면 즉시 회수한다 */
+if (z->valid_blocks == 0)
+	reclaim(z);   /* 한글 주석 정렬이 맞는가 */
+{code}
+
+h2. P26 긴 문단 (자동 줄바꿈)
+
+zone size를 48M으로 잡으면 checkpoint 주기마다 write pointer가 zone 경계에 정렬되는지 확인해야 하고, 그렇지 않으면 GC가 victim zone을 고를 때 valid block 수를 과다 계산해 불필요한 migration이 발생한다. 이 문단이 페이지 폭에서 자연스럽게 감기는지 본다.
