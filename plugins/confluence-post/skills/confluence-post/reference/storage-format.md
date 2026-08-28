@@ -4,6 +4,34 @@
 아래에서 "확인됨"은 2026-08-28 probe로 실제 렌더링을 본 것, 나머지는 Confluence DC
 기본 매크로 기준이다.
 
+## 들여쓰기 — CDATA 안만 예외
+
+요소 사이의 들여쓰기와 줄바꿈은 렌더링에 영향이 없다. 읽기 좋게 들여쓴다.
+Edit Source에서 사람이 고칠 수 있어야 하므로 들여쓰는 편이 낫다.
+
+**단 `<ac:plain-text-body>` 의 CDATA 안은 예외다.** 그 안의 공백은 코드 내용 그 자체다.
+
+```xml
+<!-- 틀림: 코드 앞에 공백 4칸이 붙어 렌더링된다 -->
+<ac:structured-macro ac:name="code">
+  <ac:plain-text-body><![CDATA[
+    int x;
+  ]]></ac:plain-text-body>
+</ac:structured-macro>
+
+<!-- 맞음: 여는 태그 바로 뒤부터 내용, 닫는 ]]> 는 마지막 줄 끝에 붙인다 -->
+<ac:structured-macro ac:name="code">
+  <ac:parameter ac:name="language">c</ac:parameter>
+  <ac:plain-text-body><![CDATA[int x;
+	return 0;]]></ac:plain-text-body>
+</ac:structured-macro>
+```
+
+코드 자체의 들여쓰기(위의 탭)는 그대로 살린다. 커널 코드는 탭이다.
+
+문장 중간에서도 줄바꿈하지 않는다. `<p>앞<code>x</code>뒤</p>` 사이에 줄바꿈을 넣으면
+렌더링에 공백이 하나 생긴다.
+
 ## 문단·인라인
 
 | markdown | storage format |

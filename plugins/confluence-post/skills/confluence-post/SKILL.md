@@ -80,9 +80,11 @@ A -> B: write
 
 4. **`out/<slug>.xhtml` 에 쓴다.** slug은 영문 kebab-case.
 
-5. **검증한다.**
+5. **검증한다.** 검사기는 이 SKILL.md 와 같은 디렉터리의 `scripts/check.py` 다.
+   설치 형태에 따라 절대 경로가 다르니 한 번 찾아서 쓴다.
    ```bash
-   python3 skills/confluence-post/scripts/check.py out/<slug>.xhtml
+   CHECK=$(find ~/.claude -path "*confluence-post/scripts/check.py" 2>/dev/null | head -1)
+   python3 "$CHECK" out/<slug>.xhtml
    ```
    ERROR가 하나라도 있으면 고쳐서 다시 돌린다. 통과하지 않은 것을 사용자에게 주지 않는다.
 
@@ -105,3 +107,6 @@ A -> B: write
 - **미설치 매크로를 쓰지 않는다.** mermaid·mathblock·gliffy는 렌더링되지 않는다.
   check.py가 ERROR로 걸러낸다.
 - **PlantUML 소스에 `]]>` 가 들어가지 않게 한다.** CDATA가 거기서 끊긴다.
+- **CDATA 안을 들여쓰지 않는다.** 요소 사이 들여쓰기는 렌더링에 영향이 없지만,
+  CDATA 안의 공백은 코드 내용 그 자체다. `<![CDATA[` 바로 뒤부터 내용을 시작하고
+  `]]>` 는 마지막 줄 끝에 붙인다. 코드 자체의 들여쓰기(커널이면 탭)는 그대로 살린다.

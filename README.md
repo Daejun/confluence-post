@@ -1,5 +1,22 @@
 # confluence-post
 
+## 설치
+
+```
+/plugin marketplace add Daejun/confluence-post
+/plugin install confluence-post@confluence-post
+```
+
+`/plugin update confluence-post` 로 갱신한다.
+
+스킬을 직접 고치면서 쓰려면 플러그인 대신 clone + symlink 를 쓴다. 저장소를 고치는 즉시
+반영된다(두 방식을 같이 쓰면 스킬이 둘로 잡히니 하나만 고른다).
+
+```bash
+git clone https://github.com/Daejun/confluence-post.git ~/confluence
+ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skills/confluence-post
+```
+
 사내 Confluence(Data Center)에 문서를 올릴 때 쓰는 **문법 가이드 스킬**과, 그 근거가 된
 렌더링 실측 probe.
 
@@ -22,10 +39,12 @@ probe로 직접 확인한 것:
 
 | 경로 | 용도 |
 |---|---|
-| `skills/confluence-post/SKILL.md` | 스킬 본체. `~/.claude/skills/confluence-post` 가 여기를 symlink |
-| `skills/confluence-post/reference/storage-format.md` | markdown → storage format 매핑 |
-| `skills/confluence-post/reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
-| `skills/confluence-post/scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
+| `.claude-plugin/marketplace.json` | 마켓플레이스 정의 |
+| `plugins/confluence-post/` | 플러그인. 스킬 하나를 담는다 |
+| `.../skills/confluence-post/SKILL.md` | 스킬 본체 |
+| `.../reference/storage-format.md` | markdown → storage format 매핑 |
+| `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
+| `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
 | `probe/ANSWER.md` | 1차 실측 응답표. B 완료 |
 | `probe/PROBE-min.txt` | B단계 입력 (완료) |
 | `probe/ANSWER-P.md` | 2차 응답표 — P1~P3 렌더링 결과를 받는다 |
