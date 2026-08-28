@@ -46,3 +46,33 @@ code 파라미터 3종, 링크 4종, 첨부 없는 이미지, blockquote·hr, �
 - `skills/confluence-post/SKILL.md` — 확정된 환경, 도식 정책
 - `skills/confluence-post/reference/storage-format.md` — 언어 목록, PlantUML
 - `skills/confluence-post/scripts/check.py` — CONFIRMED / UNAVAILABLE / TESTED_LANGS
+
+---
+
+# P4 — PlantUML (`probe/P4-plantuml.xhtml`)
+
+사내 서버가 1.2024.8 이라고 들었다. 무엇이 실제로 그려지는지 확인한다.
+개인 space에 새 페이지를 만들어 Edit Source에 붙여넣고 저장한다.
+
+**V01 이 가장 중요하다** — PlantUML 이 스스로 버전과 환경을 그림으로 찍는다.
+거기 나온 문자열을 그대로 적어 주세요. 1.2024.8 이 맞는지, JVM·폰트 정보가 무엇인지가
+한 번에 나온다.
+
+V11 은 대조군이다. 실패해야 정상이고, 실패 화면이 "렌더링 실패"가 어떻게 보이는지를 알려준다.
+
+```
+V01 version — 찍힌 문자열 그대로 =
+V02 sequence =   V03 activity(새 문법) =   V04 class =   V05 component =   V06 state =
+V07 한글 라벨 — 글자로 나옴 / 네모로 나옴 =
+V08 title·note·legend =   V09 skinparam =   V10 !theme plain =
+V11 !include stdlib(대조군, 실패해야 정상) =
+V12 mindmap =   V13 json =   V14 gantt =   V15 salt =   V16 전처리기 변수 =
+V17 listfonts — 폰트 목록이 나오면 한글 폰트가 있는지 =
+```
+
+## 이 결과로 푸는 것
+
+- V07 이 글자로 나오면 도식에 한글 라벨을 쓴다. 네모면 영문 라벨로 고정한다.
+- V12~V15 중 되는 것을 `check.py` 의 `PUML_ALLOWED` 에 넣는다.
+- V10 이 되면 `!theme` 금지를 푼다.
+- V11 이 되면(예상 밖) `!include` 금지를 완화한다.

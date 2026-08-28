@@ -5,7 +5,10 @@
 ERROR가 하나라도 있으면 넣지 않는다. 종료 코드 1.
 """
 import html.entities
+import os
 import re
+import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -23,6 +26,29 @@ UNAVAILABLE = {
     "mermaid": "미설치", "mermaid-cloud": "미설치", "mathblock": "미설치",
     "gliffy": "미설치", "excerpt": "렌더링 안 됨", "children": "렌더링 안 됨",
 }
+# 사내 PlantUML 서버 버전. reference/plantuml.md 참조.
+PLANTUML_VERSION = "1.2024.8"
+# 확인된 다이어그램 타입. P4로 확인되면 늘린다.
+PUML_ALLOWED = {"uml"}
+PUML_KNOWN = {"uml", "mindmap", "wbs", "gantt", "salt", "json", "yaml",
+              "ditaa", "dot", "creole", "ebnf", "regex", "chen", "chronology"}
+PUML_ERR = [
+    (re.compile(r"^\s*!include(url|sub)?\s+[\"']?\s*(https?://|<)", re.I | re.M),
+     "!include 로 외부 URL·stdlib 를 끌어온다. 서버가 외부망을 못 쓰면 통째로 실패한다"),
+    (re.compile(r"^\s*!(procedure|function|unquoted)\b", re.I | re.M),
+     "전처리기 문법. 버전에 민감하다"),
+]
+PUML_WARN = [
+    (re.compile(r"^\s*!theme\b", re.I | re.M),
+     "!theme 는 번들 테마에 의존한다. 확인 안 됐다"),
+    (re.compile(r"<img:|\bsprite\b", re.I),
+     "sprite·외부 이미지 의존"),
+    (re.compile(r"^\s*\(\*\)", re.M),
+     "옛 activity 문법. start / :단계; / stop 을 쓴다"),
+    (re.compile(r"^\s*skinparam\b", re.I | re.M),
+     "skinparam 은 이름이 버전에 따라 바뀐다. 서버 기본값에 맡긴다"),
+]
+
 # probe로 하이라이팅을 확인한 code language
 TESTED_LANGS = {"c", "cpp", "diff", "bash", "shell", "text", "none", "python",
                 "py", "java", "js", "javascript", "json", "yaml", "xml", "sql",
@@ -93,9 +119,69 @@ def _sub(m):
     return "￼"
 
 
+def check_plantuml(src):
+    """PlantUML 본문을 1.2024.8 에서 안전한 부분집합으로 좁힌다."""
+    if src != src.lstrip():
+        err("plantuml: `@startuml` 앞에 공백이 있다. "
+            "`<![CDATA[` 바로 뒤에 붙인다 — 들여쓰면 첫 줄을 못 읽는다")
+    lines = [l for l in src.splitlines() if l.strip()]
+    if not lines:
+        err("plantuml: 본문이 비어 있다")
+        return
+    m = re.match(r"@start(\w+)", lines[0].strip())
+    if not m:
+        err("plantuml: 첫 줄이 `@start...` 가 아니다")
+        return
+    kind = m.group(1).lower()
+    e = re.match(r"@end(\w+)", lines[-1].strip())
+    if not e or e.group(1).lower() != kind:
+        err(f"plantuml: 마지막 줄이 `@end{kind}` 가 아니다")
+    if kind not in PUML_ALLOWED:
+        msg = (f"plantuml: `@start{kind}` 는 사내 서버에서 확인되지 않았다 "
+               f"(P4 미확인). `@startuml` 로 표현한다")
+        warn(msg) if kind in PUML_KNOWN else err(msg)
+    for rx, why in PUML_ERR:
+        if rx.search(src):
+            (warn if probe_mode else err)(f"plantuml: {why}")
+    for rx, why in PUML_WARN:
+        if rx.search(src):
+            warn(f"plantuml: {why}")
+    if re.search(r"[^\x00-\x7f]", src):
+        warn("plantuml: 한글·비ASCII 라벨이 있다. 서버 폰트에 달렸고 폰트가 없으면 "
+             "네모로 나온다 (P4 V07 미확인). 확인 전에는 영문 라벨을 쓴다")
+    render_check(src)
+
+
+def plantuml_jar():
+    """사내 서버와 같은 버전의 jar 가 있으면 실제 문법 검사를 한다."""
+    for c in (os.environ.get("PLANTUML_JAR"),
+              os.path.expanduser("~/.local/share/plantuml/plantuml.jar")):
+        if c and os.path.isfile(c):
+            return c
+    return None
+
+
+def render_check(src):
+    jar = plantuml_jar()
+    if not jar or not shutil.which("java"):
+        return
+    try:
+        r = subprocess.run(["java", "-jar", jar, "-checkonly", "-pipe"],
+                           input=src.encode(), capture_output=True, timeout=60)
+    except (subprocess.TimeoutExpired, OSError) as e:
+        warn(f"plantuml: 문법 검사를 못 돌렸다 ({e.__class__.__name__})")
+        return
+    if r.returncode != 0:
+        msg = (r.stderr or r.stdout).decode(errors="replace").strip().splitlines()
+        err("plantuml: 문법 오류 — " + (msg[0] if msg else f"exit {r.returncode}"))
+
+
 def main(path):
     raw = open(path, encoding="utf-8").read()
     print(f"{path}: {raw.count(chr(10)) + 1}줄, {len(raw)}자")
+    if "plantuml" in raw and not plantuml_jar():
+        print(f"참고: PLANTUML_JAR 이 없어 문법 검사를 건너뛴다 "
+              f"(사내 서버는 {PLANTUML_VERSION})")
 
     for kind, ln, msg in check_text(raw):
         (err if kind == "E" else warn)(f"{ln}줄: {msg}")
@@ -135,6 +221,9 @@ def main(path):
                 warn(f"매크로 `{name}`: 미확인 (probe 모드라 통과)")
             else:
                 err(f"매크로 `{name}`: 확인되지 않은 매크로다. 쓰지 않는다")
+            if name == "plantuml":
+                b = el.find(f"{{{NS['ac']}}}plain-text-body")
+                check_plantuml(b.text or "" if b is not None else "")
             if name == "code":
                 lang = el.find(f"{{{NS['ac']}}}parameter[@{{{NS['ac']}}}name='language']")
                 if lang is not None and (lang.text or "") not in TESTED_LANGS:

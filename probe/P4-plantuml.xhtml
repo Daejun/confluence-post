@@ -1,0 +1,113 @@
+<p>PlantUML 1.2024.8 에서 무엇이 실제로 그려지는지 본다. <strong>V01 이 가장 중요하다</strong> — 서버가 실제로 도는 버전과 환경을 스스로 찍어 준다. V11 은 대조군이다(실패해야 정상).</p>
+<h3>V01 version — 서버가 찍는 실제 버전</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+version
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V02 sequence</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+participant Client
+participant MTFS
+Client -> MTFS: write(4K)
+activate MTFS
+MTFS -> MTFS: alloc zone
+MTFS --> Client: ack
+deactivate MTFS
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V03 activity (새 문법)</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+start
+:select victim zone;
+if (valid_blocks == 0?) then (yes)
+  :reclaim now;
+else (no)
+  :migrate;
+endif
+stop
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V04 class</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+class Zone {
+  +int valid_blocks
+  +alloc()
+}
+class SbInfo
+SbInfo "1" *-- "many" Zone
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V05 component</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+[VFS] --> [MTFS]
+[MTFS] --> [Block Layer]
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V06 state</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+[*] --> Free
+Free --> Open : alloc
+Open --> Full : write
+Full --> Free : gc
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V07 한글 라벨 — 서버 폰트 확인 (핵심)</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+title 존 회수 흐름
+participant 클라이언트
+participant 파일시스템
+클라이언트 -> 파일시스템: 쓰기 요청
+파일시스템 --> 클라이언트: 응답
+note right: 한글이 네모로 나오면 폰트가 없는 것이다
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V08 title / note / legend</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+title Zone reclaim
+A -> B: req
+note over A, B: shared note
+legend right
+  zone size 48M
+endlegend
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V09 skinparam</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+skinparam monochrome true
+skinparam backgroundColor transparent
+A -> B: req
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V10 !theme plain</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+!theme plain
+A -> B: req
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V11 !include stdlib (대조군: 실패해야 정상)</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+!include <awslib/AWSCommon>
+A -> B: req
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V12 mindmap</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startmindmap
+* MTFS
+** zone
+** gc
+@endmindmap]]></ac:plain-text-body></ac:structured-macro>
+<h3>V13 json</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startjson
+{"zone_size": "48M", "discard": true}
+@endjson]]></ac:plain-text-body></ac:structured-macro>
+<h3>V14 gantt</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startgantt
+[design] lasts 3 days
+[impl] lasts 5 days
+[impl] starts at [design]'s end
+@endgantt]]></ac:plain-text-body></ac:structured-macro>
+<h3>V15 salt (wireframe)</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startsalt
+{
+  Zone size | "48M"
+  [Cancel] | [OK]
+}
+@endsalt]]></ac:plain-text-body></ac:structured-macro>
+<h3>V16 전처리기 변수</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+!$zone = "48M"
+A -> B: zone $zone
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>V17 listfonts — 서버가 가진 폰트 목록 (안 되면 무시)</h3>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+listfonts
+@enduml]]></ac:plain-text-body></ac:structured-macro>
