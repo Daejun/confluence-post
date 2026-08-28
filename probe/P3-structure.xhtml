@@ -1,0 +1,41 @@
+<h3>S01 3단 중첩 목록</h3>
+<ul><li>1단계<ul><li>2단계<ul><li>3단계</li></ul></li></ul></li><li>다음 항목 (번호가 이어지는가)</li></ul>
+<ol><li>번호 하나<ol><li>번호 하나-하나</li></ol></li><li>번호 둘</li></ol>
+<h3>S02 8열 넓은 표 — 잘리는가, 가로 스크롤이 생기는가</h3>
+<table><tbody>
+<tr><th>bs</th><th>zone</th><th>workload</th><th>throughput</th><th>p99</th><th>kernel</th><th>device</th><th>mount</th></tr>
+<tr><td>4096</td><td>48M</td><td>seq_write</td><td>118.4 MB/s</td><td>8.2 ms</td><td>6.6</td><td>nvme0n1p3</td><td>-o discard</td></tr>
+</tbody></table>
+<h3>S03 표 셀 안의 code + expand 중첩</h3>
+<table><tbody>
+<tr><th>항목</th><th>내용</th></tr>
+<tr><td>커맨드</td><td><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">bash</ac:parameter><ac:plain-text-body><![CDATA[dmesg | grep mtfs]]></ac:plain-text-body></ac:structured-macro></td></tr>
+<tr><td>로그</td><td><ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">펼치기</ac:parameter><ac:rich-text-body><p>셀 안의 expand</p></ac:rich-text-body></ac:structured-macro></td></tr>
+</tbody></table>
+<h3>S04 아주 긴 코드 한 줄 — 감기는가, 가로 스크롤인가</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:plain-text-body><![CDATA[static int mtfs_gc_zone(struct mtfs_sb_info *sbi, unsigned int zno, struct mtfs_gc_control *gc_control, bool background, unsigned long long *migrated_blocks_out)]]></ac:plain-text-body></ac:structured-macro>
+<h3>S05 code 매크로 파라미터</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:parameter ac:name="title">fs/mtfs/gc.c</ac:parameter><ac:parameter ac:name="linenumbers">true</ac:parameter><ac:parameter ac:name="collapse">true</ac:parameter><ac:plain-text-body><![CDATA[if (z->valid_blocks == 0)
+	return 0;
+return migrate_zone(sbi, z);]]></ac:plain-text-body></ac:structured-macro>
+<p>title 이 보이는가 / 줄번호가 붙는가 / 접힌 채로 나오는가 — 셋을 따로 본다.</p>
+<h3>S06 링크</h3>
+<p>외부: <a href="https://github.com/torvalds/linux/commit/abc123">torvalds/linux abc123</a></p>
+<p>맨 URL: https://github.com/torvalds/linux</p>
+<p>URL 안 앰퍼샌드: <a href="https://example.com/q?a=1&amp;b=2">a=1&amp;b=2</a></p>
+<p>없는 페이지로 링크: <ac:link><ri:page ri:content-title="존재하지않는페이지제목"/><ac:plain-text-link-body><![CDATA[없는 페이지]]></ac:plain-text-link-body></ac:link></p>
+<h3>S07 첨부 없는 이미지 — 어떻게 보이는가</h3>
+<ac:image ac:width="400"><ri:attachment ri:filename="zone-layout.png"/></ac:image>
+<h3>S08 인용과 가로줄</h3>
+<blockquote><p>인용 본문</p></blockquote>
+<hr/>
+<h3>S09 인라인 서식</h3>
+<p><strong>굵게</strong> / <em>기울임</em> / <s>취소선</s> / <code>mtfs_zone_alloc()</code> / 그냥 밑줄 mtfs_zone_alloc()</p>
+<h3>S10 이스케이프</h3>
+<p>본문에서: A &amp;&amp; B, if (a &lt; b), z-&gt;valid_blocks</p>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:plain-text-body><![CDATA[if (a && b < c) return z->valid | mask;]]></ac:plain-text-body></ac:structured-macro>
+<p>본문과 CDATA 안이 둘 다 제대로 보이는가.</p>
+<h3>S11 제목 단계</h3>
+<h2>h2 제목</h2><h3>h3 제목</h3><h4>h4 제목</h4><h5>h5 제목</h5>
+<h3>S12 긴 한글 문단</h3>
+<p>zone size를 48M으로 잡으면 checkpoint 주기마다 write pointer가 zone 경계에 정렬되는지 확인해야 하고, 그렇지 않으면 GC가 victim zone을 고를 때 valid block 수를 과다 계산해 불필요한 migration이 발생한다. 이 문단이 페이지 폭에서 자연스럽게 감기는지 본다.</p>

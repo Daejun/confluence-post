@@ -1,0 +1,29 @@
+<p>매크로가 사내에 설치돼 있는지 본다. <strong>M99 가 대조군</strong>이다 — 설치 안 된 매크로가 어떻게 보이는지(보통 "Unknown macro") M99 로 확인하고, 같은 모양인 것을 미설치로 판정한다.</p>
+<ac:structured-macro ac:name="toc"><ac:parameter ac:name="maxLevel">3</ac:parameter></ac:structured-macro>
+<h3>M01 info</h3><ac:structured-macro ac:name="info"><ac:parameter ac:name="title">제목</ac:parameter><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M02 note</h3><ac:structured-macro ac:name="note"><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M03 warning</h3><ac:structured-macro ac:name="warning"><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M04 tip</h3><ac:structured-macro ac:name="tip"><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M05 panel</h3><ac:structured-macro ac:name="panel"><ac:parameter ac:name="title">제목</ac:parameter><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M06 expand</h3><ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">펼치기</ac:parameter><ac:rich-text-body><p>안쪽</p></ac:rich-text-body></ac:structured-macro>
+<h3>M07 toc</h3><p>맨 위 목차가 M01~M99 를 나열하면 toc 는 된다.</p>
+<h3>M08 status</h3><p><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">MERGED</ac:parameter></ac:structured-macro> <ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Red</ac:parameter><ac:parameter ac:name="title">BLOCKED</ac:parameter></ac:structured-macro></p>
+<h3>M09 noformat</h3><ac:structured-macro ac:name="noformat"><ac:plain-text-body><![CDATA[+------+------+
+| zn 0 | zn 1 |
++------+------+]]></ac:plain-text-body></ac:structured-macro>
+<h3>M10 anchor</h3><ac:structured-macro ac:name="anchor"><ac:parameter ac:name="">probe-anchor</ac:parameter></ac:structured-macro><p><ac:link ac:anchor="probe-anchor"><ac:plain-text-link-body><![CDATA[이 앵커로 가기]]></ac:plain-text-link-body></ac:link></p>
+<h3>M11 excerpt</h3><ac:structured-macro ac:name="excerpt"><ac:rich-text-body><p>발췌 본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M12 children</h3><ac:structured-macro ac:name="children"/>
+<h3>M13 jira</h3><ac:structured-macro ac:name="jira"><ac:parameter ac:name="key">TEST-1</ac:parameter></ac:structured-macro>
+<h3>M14 plantuml</h3><ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+A -> B: write
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<h3>M15 drawio</h3><ac:structured-macro ac:name="drawio"><ac:parameter ac:name="diagramName">test</ac:parameter></ac:structured-macro>
+<h3>M16 mermaid</h3><ac:structured-macro ac:name="mermaid"><ac:plain-text-body><![CDATA[graph TD; A-->B;]]></ac:plain-text-body></ac:structured-macro>
+<h3>M17 mermaid-cloud</h3><ac:structured-macro ac:name="mermaid-cloud"><ac:plain-text-body><![CDATA[graph TD; A-->B;]]></ac:plain-text-body></ac:structured-macro>
+<h3>M18 mathblock</h3><ac:structured-macro ac:name="mathblock"><ac:plain-text-body><![CDATA[E = mc^2]]></ac:plain-text-body></ac:structured-macro>
+<h3>M19 latex</h3><ac:structured-macro ac:name="latex"><ac:plain-text-body><![CDATA[E = mc^2]]></ac:plain-text-body></ac:structured-macro>
+<h3>M20 gliffy</h3><ac:structured-macro ac:name="gliffy"><ac:parameter ac:name="name">test</ac:parameter></ac:structured-macro>
+<h3>M21 attachments</h3><ac:structured-macro ac:name="attachments"/>
+<h3>M22 recently-updated</h3><ac:structured-macro ac:name="recently-updated"/>
+<h3>M99 zzznotamacro (대조군: 없는 매크로)</h3><ac:structured-macro ac:name="zzznotamacro"><ac:rich-text-body><p>본문</p></ac:rich-text-body></ac:structured-macro>

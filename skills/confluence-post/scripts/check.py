@@ -20,6 +20,7 @@ ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);")
 NS = {"ac": "http://x/ac", "ri": "http://x/ri"}
 
 errors, warns = [], []
+probe_mode = "--probe" in sys.argv[1:]
 
 
 def err(msg):
@@ -115,6 +116,8 @@ def main(path):
                 pass
             elif name in BUNDLED:
                 warn(f"매크로 `{name}`: DC 기본이지만 사내 설치 미확인 (ANSWER.md A4)")
+            elif probe_mode:
+                warn(f"매크로 `{name}`: 미확인 (probe 모드라 통과)")
             else:
                 err(f"매크로 `{name}`: 확인되지 않은 매크로다. 쓰지 않는다")
             if name == "code":
@@ -147,6 +150,7 @@ def report():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("usage: check.py <file.xhtml>")
-    main(sys.argv[1])
+    args = [a for a in sys.argv[1:] if a != "--probe"]
+    if len(args) != 1:
+        sys.exit("usage: check.py [--probe] <file.xhtml>")
+    main(args[0])

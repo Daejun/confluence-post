@@ -1,0 +1,27 @@
+<p>code 매크로의 language 값이 실제로 하이라이팅되는지 본다. <strong>L00/L06/L07 과 L01 을 비교하는 것이 핵심이다</strong> — 같아 보이면 그 language 는 지원되지 않고 기본 brush로 떨어진 것이다.</p>
+<h3>L00 zzznotalang (대조군: 없는 언어)</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">zzznotalang</ac:parameter><ac:plain-text-body><![CDATA[int n = 42; /* c */ char *s = "str";]]></ac:plain-text-body></ac:structured-macro>
+<h3>L01 c</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:plain-text-body><![CDATA[int n = 42; /* c */ char *s = "str";]]></ac:plain-text-body></ac:structured-macro>
+<h3>L02 cpp</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">cpp</ac:parameter><ac:plain-text-body><![CDATA[int n = 42; /* c */ char *s = "str";]]></ac:plain-text-body></ac:structured-macro>
+<h3>L03 diff</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">diff</ac:parameter><ac:plain-text-body><![CDATA[@@ -120,7 +120,7 @@
+-	if (z->valid == 0)
++	if (z->valid_blocks == 0)]]></ac:plain-text-body></ac:structured-macro>
+<h3>L04 bash</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">bash</ac:parameter><ac:plain-text-body><![CDATA[for f in *.c; do echo "$f" 42; done  # bash]]></ac:plain-text-body></ac:structured-macro>
+<h3>L05 shell</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">shell</ac:parameter><ac:plain-text-body><![CDATA[for f in *.c; do echo "$f" 42; done  # shell]]></ac:plain-text-body></ac:structured-macro>
+<h3>L06 text</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">text</ac:parameter><ac:plain-text-body><![CDATA[int n = 42; /* c */ char *s = "str";]]></ac:plain-text-body></ac:structured-macro>
+<h3>L07 none</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">none</ac:parameter><ac:plain-text-body><![CDATA[int n = 42; /* c */ char *s = "str";]]></ac:plain-text-body></ac:structured-macro>
+<h3>L08 python</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">python</ac:parameter><ac:plain-text-body><![CDATA[def f(n=42): return "str"  # python]]></ac:plain-text-body></ac:structured-macro>
+<h3>L09 py</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">py</ac:parameter><ac:plain-text-body><![CDATA[def f(n=42): return "str"  # py]]></ac:plain-text-body></ac:structured-macro>
+<h3>L10 java</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">java</ac:parameter><ac:plain-text-body><![CDATA[public int f() { return 42; } // "str"]]></ac:plain-text-body></ac:structured-macro>
+<h3>L11 js</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">js</ac:parameter><ac:plain-text-body><![CDATA[const s = "str"; // 42]]></ac:plain-text-body></ac:structured-macro>
+<h3>L12 javascript</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">javascript</ac:parameter><ac:plain-text-body><![CDATA[const s = "str"; // 42]]></ac:plain-text-body></ac:structured-macro>
+<h3>L13 json</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">json</ac:parameter><ac:plain-text-body><![CDATA[{"zone": "48M", "n": 42}]]></ac:plain-text-body></ac:structured-macro>
+<h3>L14 yaml</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">yaml</ac:parameter><ac:plain-text-body><![CDATA[zone: 48M  # yaml
+discard: true]]></ac:plain-text-body></ac:structured-macro>
+<h3>L15 xml</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">xml</ac:parameter><ac:plain-text-body><![CDATA[<zone size="48M"/><!-- xml -->]]></ac:plain-text-body></ac:structured-macro>
+<h3>L16 sql</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">sql</ac:parameter><ac:plain-text-body><![CDATA[SELECT id FROM zone WHERE n = 42; -- sql]]></ac:plain-text-body></ac:structured-macro>
+<h3>L17 rust</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">rust</ac:parameter><ac:plain-text-body><![CDATA[fn f() -> i32 { 42 } // "str"]]></ac:plain-text-body></ac:structured-macro>
+<h3>L18 go</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">go</ac:parameter><ac:plain-text-body><![CDATA[func f() int { return 42 } // "str"]]></ac:plain-text-body></ac:structured-macro>
+<h3>L19 perl</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">perl</ac:parameter><ac:plain-text-body><![CDATA[my $s = "str"; # 42]]></ac:plain-text-body></ac:structured-macro>
+<h3>L20 powershell</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">powershell</ac:parameter><ac:plain-text-body><![CDATA[$s = "str"  # 42]]></ac:plain-text-body></ac:structured-macro>
+<h3>L21 makefile</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">makefile</ac:parameter><ac:plain-text-body><![CDATA[obj-y += gc.o  # makefile]]></ac:plain-text-body></ac:structured-macro>
+<h3>L22 ruby</h3><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">ruby</ac:parameter><ac:plain-text-body><![CDATA[s = "str" # 42]]></ac:plain-text-body></ac:structured-macro>

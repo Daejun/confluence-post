@@ -25,26 +25,35 @@ probe로 직접 확인한 것:
 | `skills/confluence-post/SKILL.md` | 스킬 본체. `~/.claude/skills/confluence-post` 가 여기를 symlink |
 | `skills/confluence-post/reference/storage-format.md` | markdown → storage format 매핑 |
 | `skills/confluence-post/scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
-| `probe/ANSWER.md` | 실측 응답표. B는 완료, **A가 남았다** |
+| `probe/ANSWER.md` | 1차 실측 응답표. B 완료 |
 | `probe/PROBE-min.txt` | B단계 입력 (완료) |
+| `probe/ANSWER-P.md` | 2차 응답표 — P1~P3 렌더링 결과를 받는다 |
+| `probe/P1-languages.xhtml` | code 언어 22종 + 대조군. A3을 렌더링으로 대체 |
+| `probe/P2-macros.xhtml` | 매크로 22종 + 대조군. A4를 렌더링으로 대체 |
+| `probe/P3-structure.xhtml` | 표·링크·이스케이프·중첩 12항목 |
 | `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
 | `out/` | 스킬이 만든 조각 파일 |
 
-## 남은 것 — probe A (타이핑 0)
+## 남은 것 — P1~P3 렌더링
 
-A가 채워지기 전에는 스킬이 보수적으로 동작한다. 미확인 매크로를 쓰지 않고,
+사내 PC 안에서는 붙여넣기가 되므로, 메뉴를 읽는 대신 직접 렌더링해서 확인한다.
+각 페이지에 항목 라벨(L01, M01, S01)이 그대로 찍히므로 화면 캡처로 판독된다.
+응답은 `probe/ANSWER-P.md`.
+
+이 결과가 오기 전에는 스킬이 보수적으로 동작한다 — 미확인 매크로를 쓰지 않고,
 `c` 외의 언어는 `text`로 낸다.
 
-- A3 Code Block macro의 전체 언어 목록
-- A4 설치된 3rd-party 매크로 (plantuml / draw.io / mermaid / latex)
-- A5 기존 사내 페이지의 storage format — 사내가 실제로 쓰는 매크로·파라미터 어휘
-- A1 버전, A6 PAT 메뉴 유무, A7 space key
+각 페이지에 대조군이 있다. P1은 없는 언어(L00), P2는 없는 매크로(M99). 지원되는 것과
+기본값으로 떨어진 것을 그 둘과 비교해 가른다.
 
 ## 검사기
 
 ```bash
 python3 skills/confluence-post/scripts/check.py out/<slug>.xhtml
+python3 skills/confluence-post/scripts/check.py --probe probe/P1-languages.xhtml
 ```
+
+`--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
 
 잡아내는 것: 이스케이프 안 된 `&`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
 `<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
