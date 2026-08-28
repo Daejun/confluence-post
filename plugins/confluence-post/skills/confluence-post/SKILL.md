@@ -83,7 +83,7 @@ A -> B: write
 5. **검증한다.** 검사기는 이 SKILL.md 와 같은 디렉터리의 `scripts/check.py` 다.
    설치 형태에 따라 절대 경로가 다르니 한 번 찾아서 쓴다.
    ```bash
-   CHECK=$(find ~/.claude -path "*confluence-post/scripts/check.py" 2>/dev/null | head -1)
+   CHECK=$(find -L ~/.claude -path "*confluence-post/scripts/check.py" 2>/dev/null | head -1)
    python3 "$CHECK" out/<slug>.xhtml
    ```
    ERROR가 하나라도 있으면 고쳐서 다시 돌린다. 통과하지 않은 것을 사용자에게 주지 않는다.
