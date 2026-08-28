@@ -1,25 +1,8 @@
-h2. T1
-가나다
-라마바
+<h2>S1</h2>
+<table><tbody>
+<tr><th>a</th><th>b</th></tr>
+<tr><td>1</td><td><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:plain-text-body><![CDATA[int x; /* a|b */]]></ac:plain-text-body></ac:structured-macro></td></tr>
+</tbody></table>
 
-h2. T2
-mtfs_zone_alloc() 와 _do_fork() 와 {{_do_fork()}}
-
-h2. T3
-||h||i||
-|p \| q|r|
-
-h2. T4
-{code:language=c}
-int x;
-{code}
-
-h2. T5
-{status:colour=Green|title=OK}
-
-h2. T6
-* 하나
-{code:language=bash}
-ls
-{code}
-* 둘
+<h2>S2</h2>
+<ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">펼치기</ac:parameter><ac:rich-text-body><p>안쪽</p></ac:rich-text-body></ac:structured-macro>
