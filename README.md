@@ -1,35 +1,51 @@
 # confluence-post
 
-사내 Confluence(Data Center)에 문서를 올릴 때 쓸 **문법 가이드 스킬**을 만들기 위한 저장소.
+사내 Confluence(Data Center)에 문서를 올릴 때 쓰는 **문법 가이드 스킬**과, 그 근거가 된
+렌더링 실측 probe.
 
-Confluence DC는 Cloud의 fabric 에디터가 아니라 legacy 에디터 + storage format(XHTML)을
-쓴다. 무엇이 실제로 렌더링되는지를 **실측한 뒤에** 스킬 규칙을 쓴다.
+## 확정된 것 (2026-08-28 실측)
 
-## 현재 상태
+출력 형식은 **storage format (XHTML)** 이다. 사내 Confluence에 Edit Source가 있어
+wiki markup과 markdown insert를 둘 다 우회한다. 그 두 경로에만 있는 파서 함정
+(단일 개행 처리, `_` 이스케이프, 표 셀의 `|` 이스케이프)이 전부 사라진다.
 
-probe 단계. 스킬은 아직 없다.
+probe로 직접 확인한 것:
 
-정해진 것:
-- **출력 형식: storage format (XHTML).** 사내 Confluence에 Edit Source가 있으므로
-  wiki markup과 markdown insert를 둘 다 우회한다. 단일 개행 처리, `_` 이스케이프,
-  표 셀의 `|` 이스케이프는 전부 wiki markup 파서 문제라 여기서는 발생하지 않는다.
-- 게시 경로: Edit Source에 직접 입력
-- 스킬 입력: 기존 markdown 변환 + 처음부터 작성, 둘 다 지원
-- markdown insert 경로는 쓰지 않는다
-- 사내망에서 복사·붙여넣기가 안 되므로 probe는 손으로 옮겨 적을 수 있는 크기여야 한다
+- Edit Source 편집·저장 가능
+- 표 `<td>` 안에 code 매크로가 들어간다
+- CDATA 안의 `|` 가 그대로 나온다
+- `language="c"` 가 하이라이팅된다 — 커널 코드에 `cpp` 우회가 필요 없다
+- expand가 접힌 상태로 나온다
+- 저장해도 Confluence가 XHTML을 다시 쓰지 않는다
 
 ## 파일
 
 | 경로 | 용도 |
 |---|---|
-| `probe/ANSWER.md` | 응답표. **여기부터 읽는다.** A(타이핑 0) → B(8줄) |
-| `probe/PROBE-min.txt` | B단계 입력. Edit Source에 그대로 입력하는 storage format |
-| `probe/optional/` | wiki markup 전수 probe(249줄). 경로를 바꾸게 되면 사용 |
+| `skills/confluence-post/SKILL.md` | 스킬 본체. `~/.claude/skills/confluence-post` 가 여기를 symlink |
+| `skills/confluence-post/reference/storage-format.md` | markdown → storage format 매핑 |
+| `skills/confluence-post/scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
+| `probe/ANSWER.md` | 실측 응답표. B는 완료, **A가 남았다** |
+| `probe/PROBE-min.txt` | B단계 입력 (완료) |
+| `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
+| `out/` | 스킬이 만든 조각 파일 |
 
-## probe가 결정하는 것
+## 남은 것 — probe A (타이핑 0)
 
-- Code Block macro의 언어 목록에 `c`가 있는가 → 커널 코드를 `cpp`로 매핑할지
-- 설치된 매크로 → 도식을 무엇으로 그릴지, expand·status·toc를 쓸 수 있는지
-- 기존 사내 페이지의 storage format → 사내가 실제로 쓰는 매크로·파라미터 어휘
-- 표 셀 안에 code 매크로가 들어가는가 → 벤치 결과 표에 커맨드를 넣을 수 있는지
-- 저장 시 Confluence가 XHTML을 다시 쓰는가 → 스킬이 낼 XHTML 형태
+A가 채워지기 전에는 스킬이 보수적으로 동작한다. 미확인 매크로를 쓰지 않고,
+`c` 외의 언어는 `text`로 낸다.
+
+- A3 Code Block macro의 전체 언어 목록
+- A4 설치된 3rd-party 매크로 (plantuml / draw.io / mermaid / latex)
+- A5 기존 사내 페이지의 storage format — 사내가 실제로 쓰는 매크로·파라미터 어휘
+- A1 버전, A6 PAT 메뉴 유무, A7 space key
+
+## 검사기
+
+```bash
+python3 skills/confluence-post/scripts/check.py out/<slug>.xhtml
+```
+
+잡아내는 것: 이스케이프 안 된 `&`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
+`<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
+미확인 code 언어, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1.
