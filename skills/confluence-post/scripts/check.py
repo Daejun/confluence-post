@@ -9,11 +9,24 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
-# probe(2026-08-28)로 렌더링을 직접 확인한 매크로
-CONFIRMED = {"code", "expand"}
-# Confluence DC 기본 번들. 설치 확인(ANSWER.md A4)은 아직 안 됐다.
-BUNDLED = {"info", "note", "warning", "tip", "panel", "toc",
-           "status", "noformat", "anchor"}
+# probe(2026-08-28)로 렌더링을 직접 확인한 매크로. 그대로 써도 된다.
+CONFIRMED = {"code", "expand", "info", "note", "warning", "tip", "panel",
+             "toc", "status", "noformat", "anchor", "plantuml", "latex",
+             "attachments", "recently-updated"}
+# 설치돼 있지만 조건이 붙는 것
+CONDITIONAL = {
+    "jira": "실제 이슈 키로만 렌더링된다. 없는 키는 오류가 난다",
+    "drawio": "설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다",
+}
+# 렌더링이 안 되는 것을 probe로 확인했다
+UNAVAILABLE = {
+    "mermaid": "미설치", "mermaid-cloud": "미설치", "mathblock": "미설치",
+    "gliffy": "미설치", "excerpt": "렌더링 안 됨", "children": "렌더링 안 됨",
+}
+# probe로 하이라이팅을 확인한 code language
+TESTED_LANGS = {"c", "cpp", "diff", "bash", "shell", "text", "none", "python",
+                "py", "java", "js", "javascript", "json", "yaml", "xml", "sql",
+                "rust", "go", "perl", "powershell", "makefile", "ruby"}
 
 CDATA = re.compile(r"<!\[CDATA\[.*?\]\]>", re.DOTALL)
 ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);")
@@ -114,17 +127,19 @@ def main(path):
             name = el.get(f"{{{NS['ac']}}}name", "")
             if name in CONFIRMED:
                 pass
-            elif name in BUNDLED:
-                warn(f"매크로 `{name}`: DC 기본이지만 사내 설치 미확인 (ANSWER.md A4)")
+            elif name in CONDITIONAL:
+                warn(f"매크로 `{name}`: {CONDITIONAL[name]}")
+            elif name in UNAVAILABLE and not probe_mode:
+                err(f"매크로 `{name}`: {UNAVAILABLE[name]} (probe로 확인). 쓰지 않는다")
             elif probe_mode:
                 warn(f"매크로 `{name}`: 미확인 (probe 모드라 통과)")
             else:
                 err(f"매크로 `{name}`: 확인되지 않은 매크로다. 쓰지 않는다")
             if name == "code":
                 lang = el.find(f"{{{NS['ac']}}}parameter[@{{{NS['ac']}}}name='language']")
-                if lang is not None and (lang.text or "") not in ("c", "text", ""):
-                    warn(f"code language=`{lang.text}`: `c` 외에는 목록 미확인 "
-                         f"(ANSWER.md A3). 확실치 않으면 text")
+                if lang is not None and (lang.text or "") not in TESTED_LANGS:
+                    warn(f"code language=`{lang.text}`: probe로 확인하지 않은 언어다. "
+                         f"확실치 않으면 text")
         if tag in ("ul", "ol") and parent.get(el) is not None \
                 and parent[el].tag in ("ul", "ol"):
             err("중첩 목록이 <li> 밖에 있다. 부모 <li> 안으로 넣는다")

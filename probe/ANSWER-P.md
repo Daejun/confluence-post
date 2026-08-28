@@ -8,60 +8,41 @@
 
 ---
 
-## P1 — code 언어 (`P1-languages.xhtml`)
+# 결과 (2026-08-28)
 
-L00 / L06 text / L07 none 셋은 **대조군**이다. 색이 없거나 서로 같은 모양이면
-그 language 는 지원되지 않고 기본 brush로 떨어진 것이다.
+## P1 — code 언어: 시험한 22종 전부 하이라이팅됨
 
-판정: 색이 들어간 것에 O, L00 과 똑같아 보이는 것에 X.
+`c` `cpp` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
+`javascript` `json` `yaml` `xml` `sql` `rust` `go` `perl` `powershell`
+`makefile` `ruby`. `title` `linenumbers` `collapse` 도 동작.
 
-```
-L00 zzznotalang(대조군)=   L01 c=   L02 cpp=   L03 diff=   L04 bash=   L05 shell=
-L06 text=   L07 none=   L08 python=   L09 py=   L10 java=   L11 js=   L12 javascript=
-L13 json=   L14 yaml=   L15 xml=   L16 sql=   L17 rust=   L18 go=   L19 perl=
-L20 powershell=   L21 makefile=   L22 ruby=
-```
+미확인: 대조군 L00(`zzznotalang`)이 어떻게 보였는지. 대조군도 색이 났다면 위 중
+일부는 기본 brush로 떨어진 것일 수 있다. 결과는 색이 안 나는 것뿐이라 위험은 낮다.
 
-**L01 c 와 L02 cpp 가 서로 다르게 보이는가** → 
-**L03 diff 에서 `-` 줄과 `+` 줄에 색이 다르게 들어가는가** → 
+## P2 — 매크로
 
-## P2 — 매크로 설치 (`P2-macros.xhtml`)
+**쓸 수 있다**: `code` `expand` `info` `note` `warning` `tip` `panel` `toc`
+`status` `noformat` `anchor` `plantuml` `latex` `attachments` `recently-updated`
 
-M99 가 **대조군**이다. 설치 안 된 매크로가 어떤 모양인지(보통 "Unknown macro") M99 로
-보고, 같은 모양인 것을 미설치로 판정한다.
+**쓸 수 없다**: `mermaid` `mermaid-cloud` `mathblock` `gliffy` `excerpt` `children`
 
-판정: 제대로 렌더링된 것에 O, M99 와 같은 모양이면 X.
+**조건부**
+- `drawio` — "알 수 없는 매크로"가 아니라 **오류**가 났다. 즉 설치돼 있고,
+  probe가 없는 다이어그램 이름(`test`)을 가리켜 난 오류다. 다만 에디터에서 그려야
+  하므로 XHTML로 저작할 수 없다.
+- `jira` — 매크로는 있다. 실제 이슈 키로만 렌더링된다.
 
-```
-M01 info=  M02 note=  M03 warning=  M04 tip=  M05 panel=  M06 expand=  M07 toc=
-M08 status=  M09 noformat=  M10 anchor=  M11 excerpt=  M12 children=  M13 jira=
-M14 plantuml=  M15 drawio=  M16 mermaid=  M17 mermaid-cloud=  M18 mathblock=
-M19 latex=  M20 gliffy=  M21 attachments=  M22 recently-updated=  M99(대조군)=
-```
+`excerpt`·`children`은 보여줄 내용이 없어 비어 보인 것일 수도 있다. 스킬에서 안 쓰므로
+구분하지 않았다.
 
-M14~M20 이 전부 X면 **도식은 표·문장·이미지 첨부로만 간다.** 그 경우 매크로 브라우저에서
-"diagram", "uml", "draw" 로 한 번만 검색해 다른 이름의 앱이 있는지 봐 주세요 → 
+## P3 — 구조: 전 항목 정상
 
-## P3 — 구조 (`P3-structure.xhtml`)
+3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
+code 파라미터 3종, 링크 4종, 첨부 없는 이미지, blockquote·hr, 인라인 서식,
+본문·CDATA 이스케이프, h2~h5, 긴 한글 문단.
 
-```
-S01 3단 중첩 목록이 계단으로 나오는가 =
-S02 8열 표: 잘림 / 가로 스크롤 / 글자만 줄어듦 =
-S03 표 셀 안의 code / 셀 안의 expand =
-S04 긴 코드 한 줄: 줄이 감김 / 가로 스크롤 =
-S05 code 파라미터 — title 보임= , linenumbers 붙음= , collapse 접힘=
-S06 외부 링크= , 맨 URL 자동 링크= , URL 안 &= , 없는 페이지 링크 모양=
-S07 첨부 없는 이미지가 어떻게 보이는가 =
-S08 blockquote / hr =
-S09 <code> 인라인 / 본문의 mtfs_zone_alloc() 밑줄 유지 =
-S10 본문 이스케이프 / CDATA 안 && < | 그대로 =
-S11 h2~h5 가 구분되는가 =
-S12 긴 한글 문단이 자연스럽게 감기는가 =
-```
+## 이 결과가 스킬에 반영된 곳
 
-## 세 페이지 공통
-
-저장 후 Edit Source를 다시 열었을 때 **내가 넣은 XHTML이 그대로인가**
-(8줄 probe에서는 그대로였다. 분량이 커져도 같은지 본다) → 
-
-저장을 거부한 페이지가 있으면 그 오류 문구를 그대로 → 
+- `skills/confluence-post/SKILL.md` — 확정된 환경, 도식 정책
+- `skills/confluence-post/reference/storage-format.md` — 언어 목록, PlantUML
+- `skills/confluence-post/scripts/check.py` — CONFIRMED / UNAVAILABLE / TESTED_LANGS

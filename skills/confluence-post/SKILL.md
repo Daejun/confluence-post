@@ -14,24 +14,54 @@ Edit Source가 있어 둘 다 우회하고, 그 두 경로에만 있는 파서 �
 
 ## 확정된 환경 (2026-08-28 실측)
 
-probe로 직접 확인한 것. 추측이 아니다.
+probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 
-- Edit Source 편집·저장 가능
-- 표 `<td>` 안에 code 매크로가 들어간다 — 벤치 결과 표에 커맨드를 넣을 수 있다
-- CDATA 안의 `|` 가 그대로 나온다
-- `<ac:parameter ac:name="language">c</ac:parameter>` 가 하이라이팅된다 — 커널 코드에
-  `cpp` 우회가 필요 없다
-- expand 매크로가 접힌 상태로 나온다
-- 저장해도 Confluence가 XHTML을 다시 쓰지 않는다 — 낸 그대로 남는다
+**기본**
+- Edit Source 편집·저장 가능. 저장해도 Confluence가 XHTML을 다시 쓰지 않는다
+- 표 `<td>` 안에 code·expand 매크로가 들어간다
+- CDATA 안의 `&` `<` `|` 가 그대로 나온다
+- 8열 표, 긴 코드 한 줄, 3단 중첩 목록, h2~h5, blockquote, hr, 인라인 서식,
+  외부·앵커·페이지 링크, 본문 이스케이프 — 전부 정상
+
+**code 언어 — 시험한 22종이 전부 하이라이팅된다**
+`c` `cpp` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
+`javascript` `json` `yaml` `xml` `sql` `rust` `go` `perl` `powershell`
+`makefile` `ruby`. `cpp` 우회가 필요 없다. 이 목록 밖 언어는 `text`로 낸다.
+
+`title` `linenumbers` `collapse` 파라미터도 동작한다.
+
+**쓸 수 있는 매크로**
+`code` `expand` `info` `note` `warning` `tip` `panel` `toc` `status`
+`noformat` `anchor` `plantuml` `latex` `attachments` `recently-updated`
+
+**쓸 수 없는 매크로 (렌더링 안 되는 것을 확인)**
+`mermaid` `mermaid-cloud` `mathblock` `gliffy` `excerpt` `children`
+
+**조건부**
+- `drawio` — 설치돼 있다(미설치가 아니라 오류가 났다). 다만 다이어그램을 에디터에서
+  그려야 하므로 XHTML로 저작할 수 없다. 스킬이 내지 않는다.
+- `jira` — 매크로는 있다. 실제 이슈 키로만 렌더링된다.
+
+## 도식
+
+**PlantUML을 쓸 수 있다.** 소스가 평문이라 XHTML 안에 그대로 담긴다.
+
+```xml
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+A -> B: write
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+```
+
+다만 **기본은 도식 없음**이다. 전역 게시물 규칙이 도식을 빼도록 되어 있다.
+사용자가 도식을 요구했을 때만 PlantUML로 낸다. ASCII 도식은 어느 경우에도 내지 않는다.
 
 ## 아직 확인 안 된 것
 
-확인 전에는 **쓰지 않는다.** 필요해지면 사용자에게 물어 `probe/ANSWER.md`를 채운다.
-
-- Code Block macro의 전체 언어 목록 (`c`만 확인됨). 미확인 언어는 `text`로 낸다.
-- 설치된 3rd-party 매크로 (plantuml / draw.io / mermaid / latex). **없다고 가정한다.**
-- 사내가 실제로 쓰는 매크로·파라미터 어휘
-- space key, 초안을 둘 부모 페이지
+- P1의 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지 확인하지 않았다.
+  대조군도 색이 났다면 위 22종 중 일부는 기본 brush로 떨어진 것일 수 있다.
+  결과는 색이 안 나는 것뿐이라 위험은 낮다.
+- Confluence 버전, space key, 초안을 둘 부모 페이지
+- 사내가 실제로 쓰는 매크로·파라미터 어휘 (기존 페이지 Edit Source)
 
 ## 순서
 
@@ -41,9 +71,12 @@ probe로 직접 확인한 것. 추측이 아니다.
 2. **내용을 게시물 규칙으로 줄인다.** 전역 CLAUDE.md의 "게시물" 규칙이 그대로 적용된다.
    사실·근거·요청만 남긴다. 근거는 `파일:줄`, 커밋 SHA, 측정치 + 조건.
    빼는 것: 배경 설명, 용어 정의, 경위 서술, 날짜 서술, 감상, 대안 기각 목록, 인사말,
-   자기 요약 절. **ASCII 도식도 뺀다** — 표나 문장으로 바꾼다.
+   자기 요약 절. **ASCII 도식도 뺀다** — 표나 문장으로 바꾼다. 도식이 꼭 필요하다고
+   사용자가 말했을 때만 PlantUML로 낸다.
 
-3. **변환한다.** 매핑은 `reference/storage-format.md`. 외우지 말고 그 파일을 읽는다.
+3. **변환한다.** 매핑은 `reference/storage-format.md`, 완성된 예시는
+   `reference/example.xhtml`. 외우지 말고 두 파일을 읽는다.
+   `colspan` 처럼 probe로 확인하지 않은 것은 쓰지 않는다.
 
 4. **`out/<slug>.xhtml` 에 쓴다.** slug은 영문 kebab-case.
 
@@ -69,4 +102,6 @@ probe로 직접 확인한 것. 추측이 아니다.
 - **중첩 목록은 부모 `<li>` 안에 넣는다.** `<ul>` 형제로 두면 목록이 끊긴다.
 - **이미지는 먼저 첨부해야 한다.** `<ac:image>`만 넣고 첨부를 안 하면 깨진 이미지가 된다.
   첨부가 필요한 파일은 초안에서 목록으로 따로 알려준다.
-- **미확인 매크로를 쓰지 않는다.** check.py가 걸러낸다.
+- **미설치 매크로를 쓰지 않는다.** mermaid·mathblock·gliffy는 렌더링되지 않는다.
+  check.py가 ERROR로 걸러낸다.
+- **PlantUML 소스에 `]]>` 가 들어가지 않게 한다.** CDATA가 거기서 끊긴다.

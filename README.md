@@ -24,6 +24,7 @@ probe로 직접 확인한 것:
 |---|---|
 | `skills/confluence-post/SKILL.md` | 스킬 본체. `~/.claude/skills/confluence-post` 가 여기를 symlink |
 | `skills/confluence-post/reference/storage-format.md` | markdown → storage format 매핑 |
+| `skills/confluence-post/reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
 | `skills/confluence-post/scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
 | `probe/ANSWER.md` | 1차 실측 응답표. B 완료 |
 | `probe/PROBE-min.txt` | B단계 입력 (완료) |
@@ -34,17 +35,35 @@ probe로 직접 확인한 것:
 | `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
 | `out/` | 스킬이 만든 조각 파일 |
 
-## 남은 것 — P1~P3 렌더링
+## 실측 결과 (`probe/ANSWER-P.md`)
 
-사내 PC 안에서는 붙여넣기가 되므로, 메뉴를 읽는 대신 직접 렌더링해서 확인한다.
-각 페이지에 항목 라벨(L01, M01, S01)이 그대로 찍히므로 화면 캡처로 판독된다.
-응답은 `probe/ANSWER-P.md`.
+**code 언어 22종 전부 하이라이팅** — `c` `cpp` `diff` `bash` `shell` `text` `none`
+`python` `py` `java` `js` `javascript` `json` `yaml` `xml` `sql` `rust` `go`
+`perl` `powershell` `makefile` `ruby`. `title` `linenumbers` `collapse` 동작.
 
-이 결과가 오기 전에는 스킬이 보수적으로 동작한다 — 미확인 매크로를 쓰지 않고,
-`c` 외의 언어는 `text`로 낸다.
+**쓸 수 있는 매크로** — `code` `expand` `info` `note` `warning` `tip` `panel`
+`toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
+`recently-updated`
 
-각 페이지에 대조군이 있다. P1은 없는 언어(L00), P2는 없는 매크로(M99). 지원되는 것과
-기본값으로 떨어진 것을 그 둘과 비교해 가른다.
+**쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`
+`excerpt` `children`
+
+**조건부** — `drawio` 는 설치돼 있으나 에디터에서 그려야 해 XHTML로 저작할 수 없다.
+`jira` 는 실제 이슈 키로만 렌더링된다.
+
+**구조** — 3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
+링크 4종, 이스케이프, h2~h5 전부 정상.
+
+### 도식
+
+PlantUML을 쓸 수 있다. 소스가 평문이라 XHTML에 그대로 담긴다. 다만 기본은 도식 없음이고
+(전역 게시물 규칙), 요구가 있을 때만 낸다. ASCII 도식은 어느 경우에도 내지 않는다.
+
+### 남은 미확인
+
+- P1 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지. 대조군도 색이 났다면 22종 중
+  일부는 기본 brush로 떨어진 것일 수 있다. 결과는 색이 안 나는 것뿐이라 위험은 낮다.
+- Confluence 버전, space key, 초안을 둘 부모 페이지
 
 ## 검사기
 

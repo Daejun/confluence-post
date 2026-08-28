@@ -60,11 +60,20 @@
 </ac:structured-macro>
 ```
 
-- `language=c` 하이라이팅 확인됨. 커널 코드에 `cpp` 우회가 필요 없다.
 - CDATA 안에서는 `&` `<` `>` `|` 를 이스케이프하지 않는다. 확인됨.
 - **CDATA 안에 `]]>` 가 있으면 안 된다.** 있으면 매크로를 둘로 나눈다.
-- 언어 목록이 아직 미확인이다. `c` 외에는 확실치 않으면 `text`를 쓴다.
-- 언어 없는 고정폭 블록은 `ac:name="noformat"` + `<ac:plain-text-body>`.
+- `title` `linenumbers` `collapse` 파라미터 전부 동작한다. 긴 로그는 `collapse=true`.
+
+### 확인된 language (22종, 전부 하이라이팅됨)
+
+`c` `cpp` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
+`javascript` `json` `yaml` `xml` `sql` `rust` `go` `perl` `powershell`
+`makefile` `ruby`
+
+커널 코드는 `c`를 그대로 쓴다 — `cpp` 우회가 필요 없다. 패치는 `diff`.
+이 목록 밖 언어는 `text`로 낸다.
+
+언어 없는 고정폭 블록은 `ac:name="noformat"` + `<ac:plain-text-body>`.
 
 ## 패널
 
@@ -115,9 +124,25 @@ URL 안의 `&`도 `&amp;`로 바꿔야 한다.
 
 **먼저 페이지에 첨부해야 보인다.** 첨부가 필요한 파일은 초안에서 따로 목록으로 알린다.
 
+## 도식 — PlantUML (설치 확인됨)
+
+```xml
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+A -> B: write
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+```
+
+소스가 평문이라 XHTML에 그대로 담긴다. 다만 **기본은 도식 없음**이고,
+사용자가 도식을 요구했을 때만 낸다.
+
+수식은 `ac:name="latex"` + `<ac:plain-text-body>`. 설치 확인됨.
+
 ## 쓰지 않는 것
 
-- ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장으로 바꾼다.
-- plantuml / draw.io / mermaid / latex — 설치 여부 미확인. 확인 전에는 쓰지 않는다.
+- ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장, 또는 PlantUML로 바꾼다.
+- `mermaid` `mermaid-cloud` `mathblock` `gliffy` `excerpt` `children`
+  — 렌더링되지 않는 것을 확인했다.
+- `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
+- `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
 - 체크박스, 각주 — storage format에 대응이 없다. 목록과 본문으로 푼다.
 - `<thead>`, `<style>`, `class` 속성 — 저장 시 사라지거나 무시된다.

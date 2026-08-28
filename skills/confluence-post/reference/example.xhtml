@@ -1,0 +1,32 @@
+<ac:structured-macro ac:name="toc"><ac:parameter ac:name="maxLevel">2</ac:parameter></ac:structured-macro>
+<h2>판정</h2>
+<p><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">확인</ac:parameter></ac:structured-macro> zone size 48M에서 rand write IOPS가 f2fs 대비 52% 높다. seq write는 차이가 없다.</p>
+<h2>조건</h2>
+<ul>
+<li>커널 6.6, <code>CONFIG_MTFS_FS=m</code></li>
+<li>디스크: nvme0n1p3 80G 파티션, 사전에 70% 실측 채움</li>
+<li>마운트: <code>-o discard</code></li>
+<li>워크로드: fio 4K rand write, QD32, 4 job, 60s</li>
+<li>GC 발동 확인: <code>/sys/fs/mtfs/nvme0n1p3/gc_calls</code> 가 측정 중 1,204 증가</li>
+</ul>
+<h2>측정</h2>
+<table><tbody>
+<tr><th>항목</th><th>f2fs</th><th>mtfs</th><th>차이</th></tr>
+<tr><td>rand write IOPS</td><td>12,400</td><td>18,900</td><td>+52%</td></tr>
+<tr><td>seq write</td><td>118.4 MB/s</td><td>117.9 MB/s</td><td>-0.4%</td></tr>
+<tr><td>p99 지연</td><td>21.7 ms</td><td>8.2 ms</td><td>-62%</td></tr>
+<tr><td>재현 커맨드</td><td><ac:structured-macro ac:name="code"><ac:parameter ac:name="language">bash</ac:parameter><ac:plain-text-body><![CDATA[fio --name=rw --rw=randwrite --bs=4k --iodepth=32 --numjobs=4 --runtime=60 --directory=/mnt/scratch]]></ac:plain-text-body></ac:structured-macro></td><td>-</td><td>-</td></tr>
+</tbody></table>
+<h2>근거</h2>
+<p>victim zone 선택에서 <code>valid_blocks</code> 대신 <code>valid</code> 를 보고 있었다. <a href="https://github.com/example/repo/commit/abc1234">abc1234</a> 에서 고쳤다.</p>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">diff</ac:parameter><ac:parameter ac:name="title">fs/mtfs/gc.c</ac:parameter><ac:plain-text-body><![CDATA[@@ -120,7 +120,7 @@ static int mtfs_gc_zone(struct mtfs_sb_info *sbi, unsigned int zno)
+-	if (z->valid == 0)
++	if (z->valid_blocks == 0)
+ 		return 0;]]></ac:plain-text-body></ac:structured-macro>
+<ac:structured-macro ac:name="expand"><ac:parameter ac:name="title">fio 원본 출력</ac:parameter><ac:rich-text-body>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">text</ac:parameter><ac:plain-text-body><![CDATA[rw: (groupid=0, jobs=4): err= 0: pid=1234
+  write: IOPS=18.9k, BW=73.8MiB/s (77.4MB/s)(4430MiB/60001msec)
+    clat percentiles (usec): 99.00th=[ 8225]]]></ac:plain-text-body></ac:structured-macro>
+</ac:rich-text-body></ac:structured-macro>
+<h2>요청</h2>
+<ac:structured-macro ac:name="info"><ac:rich-text-body><p>zone size 48M 외의 값(32M, 64M)에서도 같은 경향인지 확인이 필요하다. 장비를 하루 빌릴 수 있는지 알려주세요.</p></ac:rich-text-body></ac:structured-macro>
