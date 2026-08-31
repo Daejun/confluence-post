@@ -4,6 +4,27 @@
 Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. 나온 파일 한 장을
 페이지의 **Edit Source** 에 붙여넣으면 끝이다.
 
+## 빠른 시작
+
+**1. 설치** — Claude Code 안에서 두 줄.
+
+```
+/plugin marketplace add Daejun/confluence-post
+/plugin install confluence-post@confluence-post
+```
+
+**2. 부른다** — 스킬 이름은 외울 필요 없다. 파일을 주면 변환하고, 안 주면 새로 쓴다.
+
+```
+work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
+```
+
+**3. 넣는다** — 초안을 승인하면 `out/<slug>.xhtml` 이 나온다. Confluence 페이지 편집
+화면 오른쪽 위 `< >` (소스 편집) 를 눌러 그 파일 내용을 **전체** 붙여넣고 저장한다.
+일반 편집 화면에 붙이면 태그가 글자로 보이니 반드시 `< >` 안에 넣는다.
+
+자세한 것은 아래 [쓰는 법](#쓰는-법), 설치 옵션은 [설치](#설치).
+
 ## 왜 쓰나
 
 **markdown을 그대로 붙여넣으면 깨진다.** DC는 Cloud의 fabric 에디터가 아니라 legacy
@@ -190,7 +211,7 @@ OK
 
 잡아내는 것: 이스케이프 안 된 `&`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
 `<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
-미확인 code 언어, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
+미확인 code 언어, 제목 단계, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
 그 파일은 Edit Source에 넣지 않는다.
 
 `--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.

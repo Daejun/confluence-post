@@ -51,6 +51,7 @@ TESTED_LANGS = {"c", "cpp", "diff", "bash", "shell", "text", "none", "python",
                 "py", "java", "js", "javascript", "json", "yaml", "xml", "sql",
                 "rust", "go", "perl", "powershell", "makefile", "ruby"}
 
+HEADING = re.compile(r"<h([1-6])\b[^>]*>(.*?)</h\1\s*>", re.DOTALL | re.I)
 CDATA = re.compile(r"<!\[CDATA\[.*?\]\]>", re.DOTALL)
 ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);")
 NS = {"ac": "http://x/ac", "ri": "http://x/ri"}
@@ -116,6 +117,39 @@ def _sub(m):
     return "￼"
 
 
+def check_headings(raw):
+    """제목 단계로 절 구분을 본다.
+
+    여기서 보는 것은 출력물 안에서 닫힌 규칙뿐이다. 원문의 절이 빠지지 않았는지,
+    이어 붙일 페이지의 관례를 따랐는지는 정적으로 볼 수 없다 — SKILL.md 6단계에서
+    사람이 대조한다.
+    """
+    masked = CDATA.sub(lambda m: " " * len(m.group(0)), raw)
+    heads = [(int(m.group(1)),
+              re.sub(r"<[^>]+>", "", m.group(2)).strip(),
+              lineno(raw, m.start()))
+             for m in HEADING.finditer(masked)]
+    if not heads:
+        if raw.count("\n") + 1 >= 60:
+            warn(f"제목이 하나도 없다 ({raw.count(chr(10)) + 1}줄). h2 로 절을 나눈다")
+        return
+    prev = None
+    for lvl, text, ln in heads:
+        if lvl == 1:
+            warn(f"{ln}줄: <h1> 은 페이지 제목이 가져간다. 본문은 h2 부터 쓴다")
+        if lvl == 6:
+            warn(f"{ln}줄: <h6> 는 probe로 확인하지 않았다 (h2~h5만 확인)")
+        if not text:
+            warn(f"{ln}줄: <h{lvl}> 이 비어 있다")
+        if prev is None:
+            if lvl > 2 and not probe_mode:
+                warn(f"{ln}줄: 첫 제목이 <h{lvl}> 이다. 본문은 h2 부터 시작한다")
+        elif lvl > prev + 1:
+            warn(f"{ln}줄: <h{prev}> 다음이 <h{lvl}> 이다. 단계를 건너뛰면 "
+                 f"toc와 절 구분이 어긋난다")
+        prev = lvl
+
+
 def check_plantuml(src):
     """PlantUML 본문을 1.2024.8 에서 안전한 부분집합으로 좁힌다."""
     if src != src.lstrip():
@@ -154,6 +188,8 @@ def main(path):
 
     for kind, ln, msg in check_text(raw):
         (err if kind == "E" else warn)(f"{ln}줄: {msg}")
+
+    check_headings(raw)
 
     for bad, why in [("<!DOCTYPE", "조각에 DOCTYPE을 쓰지 않는다"),
                      ("<html", "조각에 <html>을 쓰지 않는다"),
