@@ -1,13 +1,63 @@
 # confluence-post
 
-Confluence Data Center에 올릴 문서를 **storage format(XHTML)** 으로 만드는 Claude Code
-스킬. 만들어진 조각을 페이지의 **Edit Source** 에 그대로 넣는다.
+사내 Confluence Data Center에 올릴 문서를 **storage format(XHTML)** 으로 만들어 주는
+Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. 나온 파일 한 장을
+페이지의 **Edit Source** 에 붙여넣으면 끝이다.
 
-DC는 Cloud의 fabric 에디터가 아니라 legacy 에디터 + storage format을 쓴다. markdown을
-그대로 붙여넣으면 표부터 깨지고, wiki markup에는 단일 개행 처리와 `_` `|` 이스케이프
-함정이 있다. Edit Source로 가면 둘 다 우회한다.
+## 왜 쓰나
 
-규칙은 추측이 아니라 **실제 DC 인스턴스에서 렌더링을 실측해** 정했다. 근거는 `probe/`.
+**markdown을 그대로 붙여넣으면 깨진다.** DC는 Cloud의 fabric 에디터가 아니라 legacy
+에디터를 쓴다. 표는 `|` 줄이 그대로 글자로 남고, 코드 블록은 하이라이팅 없이 평문이 된다.
+
+**wiki markup(`h1.`, `{code}`)은 함정이 많다.** 단일 개행이 무시돼 줄이 붙고, `_` 가
+기울임으로 먹히고, 표 셀 안의 `|` 가 셀 구분자로 잘린다. 커널 로그·diff·경로를 붙이면
+거의 매번 하나는 걸린다.
+
+**Edit Source + storage format은 그 두 경로를 다 우회한다.** 파서를 거치지 않고 최종
+XHTML을 직접 넣기 때문에 위 함정이 전부 사라진다. 대신 손으로 쓰기엔 번거로운 형식이라
+(`<ac:structured-macro>`, CDATA, 엔티티 이스케이프) 스킬이 대신 쓴다.
+
+여기에 두 가지가 더 붙는다.
+
+- **쓸 수 있는 매크로와 언어를 실측해 뒀다.** mermaid를 넣었다가 페이지에 빨간 오류가
+  뜨는 일이 없다. 근거는 `probe/` — 실제 사내 인스턴스에 넣어 렌더링을 확인한 결과다.
+- **내용도 게시물 규칙으로 줄인다.** 배경 설명, 경위 서술, 감상, 인사말을 빼고 사실·근거·
+  요청만 남긴다. 근거는 `파일:줄`, 커밋 SHA, 측정치와 그 조건.
+
+### 변환 예시
+
+주는 것 (markdown):
+
+```markdown
+## 결론
+zone 크기를 48M 으로 줄이면 rand-write IOPS 가 12% 오른다.
+
+| fs | IOPS |
+|---|---|
+| f2fs | 18,400 |
+| mtfs | 20,600 |
+
+    if (a < b && c)
+            return -EINVAL;
+```
+
+나오는 것 (`out/<slug>.xhtml`):
+
+```xml
+<h2>결론</h2>
+<p>zone 크기를 48M 으로 줄이면 rand-write IOPS 가 12% 오른다.</p>
+<table><tbody>
+<tr><th>fs</th><th>IOPS</th></tr>
+<tr><td>f2fs</td><td>18,400</td></tr>
+<tr><td>mtfs</td><td>20,600</td></tr>
+</tbody></table>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter>
+<ac:plain-text-body><![CDATA[if (a < b && c)
+	return -EINVAL;]]></ac:plain-text-body></ac:structured-macro>
+```
+
+`a < b && c` 가 본문에 있었다면 `&lt;` `&amp;&amp;` 로 바뀐다. CDATA 안이라 그대로
+둔 것이고, 그 구분을 놓치면 저장이 거부된다. 이런 자리를 대신 지켜 주는 게 이 스킬이다.
 
 ## 설치
 
@@ -19,13 +69,7 @@ Claude Code 안에서:
 ```
 
 갱신은 `/plugin update confluence-post`, 제거는 `/plugin uninstall confluence-post`.
-재시작은 필요 없다.
-
-설치됐는지 보려면 `/plugin` 을 열어 목록에서 확인하거나, 아래처럼 불러본다.
-
-```
-컨플루언스에 올릴 문서로 바꿔줘
-```
+재시작은 필요 없다. 설치됐는지는 `/plugin` 목록에서 확인한다.
 
 ### 고쳐가며 쓸 때는 clone + symlink
 
@@ -42,78 +86,87 @@ ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skil
 ### 요구사항
 
 - Confluence **Data Center**. Cloud는 storage format이 달라 대상이 아니다.
-- 페이지의 **Edit Source**(소스 편집)에 접근 권한이 있어야 한다. 읽기 전용이면 못 쓴다.
+- 페이지의 **Edit Source**(소스 편집) 권한. 읽기 전용 계정이면 못 쓴다.
 - `check.py` 실행에 python3. 표준 라이브러리만 쓴다. 다른 의존성은 없다.
 
 ## 쓰는 법
 
-markdown 파일을 주면 변환하고, 없으면 새로 쓴다. **산출물은 `out/<slug>.xhtml` 파일 한 장까지다** —
-Confluence 에 넣는 것은 사람이 한다.
-`check.py` 를 통과하지 않은 것은 내주지 않는다. 게시 전에 초안을 보여주고 승인을 받는다.
+### 1. 부른다
 
-끝나면 넣는 방법을 이렇게 알려준다.
+스킬 이름을 외울 필요는 없다. 이렇게 말하면 잡힌다.
 
-> 페이지 작성 화면에서 오른쪽 위의 `< >` 를 눌러 `<파일명>` 출력물을 넣어주세요.
+```
+work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
+```
 
-분량이 곧 옮기는 비용이라 줄 수·문자 수를 함께 보고한다.
+```
+지난주 mtfs 벤치 결과로 컨플루언스 페이지 하나 써줘
+```
 
-## 확정된 것 (2026-08-28 실측)
+파일 경로를 주면 변환하고, 안 주면 대화 내용으로 새로 쓴다. 어느 쪽으로 갈지 먼저
+한 줄로 밝히고 시작한다.
 
-출력 형식은 **storage format (XHTML)** 이다. 사내 Confluence에 Edit Source가 있어
-wiki markup과 markdown insert를 둘 다 우회한다. 그 두 경로에만 있는 파서 함정
-(단일 개행 처리, `_` 이스케이프, 표 셀의 `|` 이스케이프)이 전부 사라진다.
+### 2. 초안을 확인한다
 
-probe로 직접 확인한 것:
+XHTML 원문을 쏟아내지 않고, 렌더링될 내용을 읽기 좋은 형태로 보여준다. 고칠 곳을
+말하면 고친 초안을 다시 보여준다. 승인 전에는 파일을 넘기지 않는다.
 
-- Edit Source 편집·저장 가능
-- 표 `<td>` 안에 code 매크로가 들어간다
-- CDATA 안의 `|` 가 그대로 나온다
-- `language="c"` 가 하이라이팅된다 — 커널 코드에 `cpp` 우회가 필요 없다
-- expand가 접힌 상태로 나온다
-- 저장해도 Confluence가 XHTML을 다시 쓰지 않는다
+이때 함께 확인하는 것: code 매크로의 `title` 에 적힌 파일을 실제로 열어 대조했는지,
+표의 수치가 측정 출력에서 복사한 것인지와 조건이 적혀 있는지, PR·이슈·커밋 번호를
+`gh` 출력에서 가져왔는지. 대조하지 못한 것이 있으면 초안에 그렇게 적는다.
 
-## 파일
+### 3. 검사를 통과한 파일을 받는다
 
-| 경로 | 용도 |
-|---|---|
-| `.claude-plugin/marketplace.json` | 마켓플레이스 정의 |
-| `plugins/confluence-post/` | 플러그인. 스킬 하나를 담는다 |
-| `.../skills/confluence-post/SKILL.md` | 스킬 본체 |
-| `.../reference/storage-format.md` | markdown → storage format 매핑 |
-| `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
-| `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
-| `probe/ANSWER.md` | 1차 실측 응답표. B 완료 |
-| `probe/PROBE-min.txt` | B단계 입력 (완료) |
-| `probe/ANSWER-P.md` | 2차 응답표 — P1~P3 렌더링 결과를 받는다 |
-| `probe/P1-languages.xhtml` | code 언어 22종 + 대조군. A3을 렌더링으로 대체 |
-| `probe/P2-macros.xhtml` | 매크로 22종 + 대조군. A4를 렌더링으로 대체 |
-| `probe/P3-structure.xhtml` | 표·링크·이스케이프·중첩 12항목 |
-| `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
-| `out/` | 스킬이 만든 조각 파일 |
+```
+out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 
-## 실측 결과 (`probe/ANSWER-P.md`)
+페이지 작성 화면에서 오른쪽 위의 < > 를 눌러 mtfs-zone-bench.xhtml 출력물을 넣어주세요.
+```
+
+줄 수·문자 수를 같이 주는 이유는 그게 곧 옮기는 비용이라서다. 길면 어디서 끊어
+나눠 넣을지도 알려준다.
+
+### 4. Confluence에 넣는다
+
+1. 페이지를 만들거나 편집 화면을 연다
+2. 오른쪽 위 `< >` (소스 편집 / Edit Source) 를 누른다
+3. 파일 내용을 **전체** 복사해 그 창에 붙여넣는다 (기존 내용에 이어 붙일 거면 끝에)
+4. 창을 닫고 저장한다
+
+일반 편집 화면에 붙여넣으면 `<ac:structured-macro ...>` 가 글자로 보인다. 반드시
+`< >` 안에 넣는다.
+
+**이미지가 있으면 먼저 첨부한다.** 검사기가 첨부해야 할 파일 목록을 따로 알려준다.
+첨부 없이 저장하면 깨진 이미지로 나온다.
+
+## 쓸 수 있는 것 (2026-08-28 실측)
+
+`probe/` 로 실제 렌더링을 확인한 결과다. 추측이 아니다.
 
 **code 언어 22종 전부 하이라이팅** — `c` `cpp` `diff` `bash` `shell` `text` `none`
 `python` `py` `java` `js` `javascript` `json` `yaml` `xml` `sql` `rust` `go`
-`perl` `powershell` `makefile` `ruby`. `title` `linenumbers` `collapse` 동작.
+`perl` `powershell` `makefile` `ruby`. 커널 코드에 `cpp` 우회가 필요 없다.
+`title` `linenumbers` `collapse` 파라미터도 동작한다.
 
 **쓸 수 있는 매크로** — `code` `expand` `info` `note` `warning` `tip` `panel`
 `toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
 `recently-updated`
 
 **쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`
-`excerpt` `children`
+`excerpt` `children`. 넣으면 check.py 가 ERROR로 막는다.
 
 **조건부** — `drawio` 는 설치돼 있으나 에디터에서 그려야 해 XHTML로 저작할 수 없다.
 `jira` 는 실제 이슈 키로만 렌더링된다.
 
 **구조** — 3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
-링크 4종, 이스케이프, h2~h5 전부 정상.
+링크 4종, 본문 이스케이프, h2~h5 전부 정상. 저장해도 Confluence가 XHTML을 다시 쓰지 않는다.
 
 ### 도식
 
-PlantUML을 쓸 수 있다. 소스가 평문이라 XHTML에 그대로 담긴다. 다만 기본은 도식 없음이고
-(전역 게시물 규칙), 요구가 있을 때만 낸다. ASCII 도식은 어느 경우에도 내지 않는다.
+PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTML에 그대로 담긴다.
+다만 **기본은 도식 없음**이고, 요구가 있을 때만 낸다. ASCII 도식은 어느 경우에도 내지
+않는다. check.py 는 문법 규칙만 정적으로 보므로, 실제로 그려지는지는 넣어 봐야 안다 —
+도식이 든 초안에는 그 점을 밝힌다.
 
 ### 남은 미확인
 
@@ -123,13 +176,45 @@ PlantUML을 쓸 수 있다. 소스가 평문이라 XHTML에 그대로 담긴다.
 
 ## 검사기
 
+스킬이 파일을 내기 전에 자동으로 돌린다. 직접 돌릴 수도 있다.
+
 ```bash
-python3 skills/confluence-post/scripts/check.py out/<slug>.xhtml
-python3 skills/confluence-post/scripts/check.py --probe probe/P1-languages.xhtml
+python3 plugins/confluence-post/skills/confluence-post/scripts/check.py out/<slug>.xhtml
 ```
 
-`--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
+```
+out/mtfs-zone-bench.xhtml: 142줄, 6,318자
+
+OK
+```
 
 잡아내는 것: 이스케이프 안 된 `&`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
 `<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
-미확인 code 언어, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1.
+미확인 code 언어, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
+그 파일은 Edit Source에 넣지 않는다.
+
+`--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
+
+```bash
+python3 .../scripts/check.py --probe probe/P1-languages.xhtml
+```
+
+## 파일
+
+| 경로 | 용도 |
+|---|---|
+| `.claude-plugin/marketplace.json` | 마켓플레이스 정의 |
+| `plugins/confluence-post/` | 플러그인. 스킬 하나를 담는다 |
+| `.../skills/confluence-post/SKILL.md` | 스킬 본체 |
+| `.../reference/storage-format.md` | markdown → storage format 매핑 |
+| `.../reference/plantuml.md` | PlantUML 문법 규칙과 쓰지 않는 것 |
+| `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
+| `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
+| `probe/ANSWER.md` | 1차 실측 응답표 |
+| `probe/ANSWER-P.md` | 2차 응답표 — P1~P3 렌더링 결과 |
+| `probe/P1-languages.xhtml` | code 언어 22종 + 대조군 |
+| `probe/P2-macros.xhtml` | 매크로 22종 + 대조군 |
+| `probe/P3-structure.xhtml` | 표·링크·이스케이프·중첩 12항목 |
+| `probe/P4-plantuml.xhtml` | PlantUML 다이어그램 타입 |
+| `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
+| `out/` | 스킬이 만든 조각 파일 |
