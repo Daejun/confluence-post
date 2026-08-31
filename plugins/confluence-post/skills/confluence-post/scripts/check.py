@@ -51,6 +51,16 @@ TESTED_LANGS = {"c", "cpp", "diff", "bash", "shell", "text", "none", "python",
                 "py", "java", "js", "javascript", "json", "yaml", "xml", "sql",
                 "rust", "go", "perl", "powershell", "makefile", "ruby"}
 
+# Confluence storage format 이 받는 HTML 태그. 이 밖의 이름이 나오면 대개 본문의
+# `<` 를 이스케이프하지 않은 것이다 (`<writer> blocked` 같은 로그 인용).
+ALLOWED_TAGS = {
+    "p", "h1", "h2", "h3", "h4", "h5", "h6", "br", "hr", "a", "span", "div",
+    "strong", "em", "b", "i", "u", "s", "del", "ins", "sub", "sup", "code",
+    "pre", "tt", "kbd", "samp", "var", "cite", "q", "small", "big",
+    "ul", "ol", "li", "dl", "dt", "dd", "blockquote",
+    "table", "tbody", "thead", "tfoot", "tr", "th", "td", "caption",
+    "colgroup", "col", "img", "time",
+}
 HEADING = re.compile(r"<h([1-6])\b[^>]*>(.*?)</h\1\s*>", re.DOTALL | re.I)
 CDATA = re.compile(r"<!\[CDATA\[.*?\]\]>", re.DOTALL)
 ENTITY = re.compile(r"&(#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);")
@@ -94,6 +104,14 @@ def scan_plain(raw, start, end):
         if not name.startswith("#") and name not in ("amp", "lt", "gt", "quot", "apos") \
                 and name + ";" not in html.entities.html5:
             yield ("E", lineno(raw, at), f"알 수 없는 엔티티 `&{name};`")
+    escaped = ("이스케이프 안 된 `<`. `&lt;` 로 바꾼다 "
+               "(문단만이 아니라 <code> 안의 글자도 CDATA 밖이다)")
+    for m in re.finditer(r"<(?![A-Za-z/!?])", seg):
+        yield ("E", lineno(raw, start + m.start()), escaped)
+    # `<hanqi@vivo.com>` 처럼 글자로 시작하지만 태그 이름이 될 수 없는 것
+    for m in re.finditer(r"<([A-Za-z][^\s/>]*)", seg):
+        if re.search(r"[^A-Za-z0-9._:-]", m.group(1)):
+            yield ("E", lineno(raw, start + m.start()), escaped)
     for m in re.finditer(r"\]\]>", seg):
         yield ("E", lineno(raw, start + m.start()),
                "본문에 `]]>` 가 있다. CDATA가 여기서 끊긴다 — code 매크로를 둘로 나눈다")
@@ -148,6 +166,23 @@ def check_headings(raw):
             warn(f"{ln}줄: <h{prev}> 다음이 <h{lvl}> 이다. 단계를 건너뛰면 "
                  f"toc와 절 구분이 어긋난다")
         prev = lvl
+
+
+def check_cdata_head(el, name):
+    """`<![CDATA[` 다음 줄부터 코드를 시작하면 렌더링에 빈 줄이 하나 생긴다.
+
+    코드 자체의 들여쓰기(탭·공백)는 내용이므로 건드리지 않는다. 첫 글자가 개행일
+    때만 본다.
+    """
+    b = el.find(f"{{{NS['ac']}}}plain-text-body")
+    body = (b.text or "") if b is not None else ""
+    if not body:
+        return
+    if body.lstrip(" \t")[:1] == "\n":
+        first = body.strip().splitlines()[0][:30] if body.strip() else ""
+        warn(f"{name} 매크로: `<![CDATA[` 다음 줄에서 내용이 시작한다 — 코드 위에 "
+             f"빈 줄이 생긴다. `<![CDATA[` 바로 뒤에 붙인다"
+             + (f" (`{first}`)" if first else ""))
 
 
 def check_plantuml(src):
@@ -214,6 +249,9 @@ def main(path):
     images = []
     for el in root.iter():
         tag = el.tag
+        if el is not root and "}" not in tag and tag not in ALLOWED_TAGS:
+            err(f"알 수 없는 태그 `<{tag}>`. Confluence가 받는 태그가 아니다 — "
+                f"본문의 `<` 를 `&lt;` 로 이스케이프했는지 본다")
         if tag == f"{{{NS['ac']}}}structured-macro":
             name = el.get(f"{{{NS['ac']}}}name", "")
             if name in CONFIRMED:
@@ -234,6 +272,8 @@ def main(path):
                 if lang is not None and (lang.text or "") not in TESTED_LANGS:
                     warn(f"code language=`{lang.text}`: probe로 확인하지 않은 언어다. "
                          f"확실치 않으면 text")
+            if name in ("code", "noformat"):
+                check_cdata_head(el, name)
         if tag in ("ul", "ol") and parent.get(el) is not None \
                 and parent[el].tag in ("ul", "ol"):
             err("중첩 목록이 <li> 밖에 있다. 부모 <li> 안으로 넣는다")

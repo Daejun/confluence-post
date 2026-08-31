@@ -64,6 +64,22 @@ Edit Source에서 사람이 고칠 수 있어야 하므로 들여쓰는 편이 �
 
 중첩 `<ul>`은 **부모 `<li>` 안에** 넣는다. 번호 목록은 `<ol>`.
 
+### 체크박스 — `status` 매크로를 앞에 붙인다
+
+markdown `- [x]` / `- [ ]` 에 대응하는 태그는 없다. 목록 구조는 그대로 두고 항목 앞에
+status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** — 표기를 매번 새로
+정하지 않는다.
+
+```xml
+<ul>
+<li><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">완료</ac:parameter></ac:structured-macro> zone 재선택 경로 수정</li>
+<li><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Grey</ac:parameter><ac:parameter ac:name="title">대기</ac:parameter></ac:structured-macro> xfstests 재확인</li>
+</ul>
+```
+
+리터럴 `[x]` `[ ]` 를 그대로 남기지 않는다. 항목이 20개를 넘어 status 가 화면을 덮으면
+표(항목 / 상태) 로 바꾸고, 구조를 바꿨다는 것을 초안에 적는다.
+
 ## 표 — 확인됨
 
 ```xml
@@ -144,6 +160,11 @@ Edit Source에서 사람이 고칠 수 있어야 하므로 들여쓰는 편이 �
 
 URL 안의 `&`도 `&amp;`로 바꿔야 한다.
 
+**로컬 상대경로 링크는 링크로 만들지 않는다.** 원문의 `[DESIGN.md](DESIGN.md)`,
+`[logs/](logs/)` 는 읽는 사람이 열 수 없는 경로다. 기본은 평문
+`<code>DESIGN.md</code>` 다. 저장소가 GitHub에 있고 `gh` 로 URL을 확인한 경우에만
+절대 URL `<a href>` 로 바꾼다 — URL을 기억으로 쓰지 않는다.
+
 ## 이미지
 
 ```xml
@@ -172,5 +193,5 @@ A -> B: write
   — 렌더링되지 않는 것을 확인했다.
 - `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
 - `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
-- 체크박스, 각주 — storage format에 대응이 없다. 목록과 본문으로 푼다.
+- 각주 — storage format에 대응이 없다. 본문으로 푼다. 체크박스는 위 `목록` 절을 본다.
 - `<thead>`, `<style>`, `class` 속성 — 저장 시 사라지거나 무시된다.
