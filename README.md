@@ -43,21 +43,12 @@ ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skil
 
 - Confluence **Data Center**. Cloud는 storage format이 달라 대상이 아니다.
 - 페이지의 **Edit Source**(소스 편집)에 접근 권한이 있어야 한다. 읽기 전용이면 못 쓴다.
-- `check.py` 실행에 python3. 표준 라이브러리만 쓴다.
-- 도식(PlantUML)을 쓸 거면 java. `scripts/setup.sh` 가 사내와 같은 **1.2024.8** jar 을
-  `~/.local/share/plantuml/plantuml.jar` 에 받는다. java 설치는 root 가 필요해 사용자가
-  직접 해야 하고, 스크립트가 명령을 알려준다.
-
-```bash
-bash plugins/confluence-post/skills/confluence-post/scripts/setup.sh
-```
-
-jar 이 있으면 `check.py` 가 게시 전에 PlantUML 문법을 실제로 파싱해 본다. 없으면 그
-단계만 건너뛰고 나머지는 그대로 돈다.
+- `check.py` 실행에 python3. 표준 라이브러리만 쓴다. 다른 의존성은 없다.
 
 ## 쓰는 법
 
-markdown 파일을 주면 변환하고, 없으면 새로 쓴다. 산출물은 `out/<slug>.xhtml` 한 장이다.
+markdown 파일을 주면 변환하고, 없으면 새로 쓴다. **산출물은 `out/<slug>.xhtml` 파일 한 장까지다** —
+Confluence 에 넣는 것은 사람이 한다.
 `check.py` 를 통과하지 않은 것은 내주지 않는다. 게시 전에 초안을 보여주고 승인을 받는다.
 
 분량이 곧 옮겨 적는 비용이라 줄 수·문자 수를 함께 보고한다.
