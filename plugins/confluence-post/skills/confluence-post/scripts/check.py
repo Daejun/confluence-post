@@ -17,11 +17,17 @@ CONFIRMED = {"code", "expand", "info", "note", "warning", "tip", "panel",
 CONDITIONAL = {
     "jira": "실제 이슈 키로만 렌더링된다. 없는 키는 오류가 난다",
     "drawio": "설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다",
+    # probe 에서는 안 보였지만 실제 페이지 수십 곳에서 최근까지 쓰인다. probe 페이지에
+    # 하위 페이지·발췌 대상이 없어 비어 보였을 수 있다.
+    "excerpt": "실제 페이지에서 쓰이나 렌더링은 다시 확인해야 한다. 새로 넣지 않고 "
+               "기존 페이지에 있던 것만 옮긴다",
+    "children": "실제 페이지에서 쓰이나 렌더링은 다시 확인해야 한다. 새로 넣지 않고 "
+                "기존 페이지에 있던 것만 옮긴다",
 }
 # 렌더링이 안 되는 것을 probe로 확인했다
 UNAVAILABLE = {
     "mermaid": "미설치", "mermaid-cloud": "미설치", "mathblock": "미설치",
-    "gliffy": "미설치", "excerpt": "렌더링 안 됨", "children": "렌더링 안 됨",
+    "gliffy": "미설치",
 }
 # 사내 PlantUML 서버 버전. reference/plantuml.md 참조.
 PLANTUML_VERSION = "1.2024.8"
@@ -68,6 +74,8 @@ NS = {"ac": "http://x/ac", "ri": "http://x/ri"}
 
 errors, warns = [], []
 probe_mode = "--probe" in sys.argv[1:]
+# 이어 붙일 페이지가 본문을 h1 부터 쓰는 관례일 때. SKILL.md 6단계.
+h1_mode = "--h1" in sys.argv[1:]
 
 
 def err(msg):
@@ -147,21 +155,23 @@ def check_headings(raw):
               re.sub(r"<[^>]+>", "", m.group(2)).strip(),
               lineno(raw, m.start()))
              for m in HEADING.finditer(masked)]
+    top = 1 if h1_mode else 2
     if not heads:
         if raw.count("\n") + 1 >= 60:
-            warn(f"제목이 하나도 없다 ({raw.count(chr(10)) + 1}줄). h2 로 절을 나눈다")
+            warn(f"제목이 하나도 없다 ({raw.count(chr(10)) + 1}줄). h{top} 로 절을 나눈다")
         return
     prev = None
     for lvl, text, ln in heads:
-        if lvl == 1:
-            warn(f"{ln}줄: <h1> 은 페이지 제목이 가져간다. 본문은 h2 부터 쓴다")
+        if lvl == 1 and not h1_mode:
+            warn(f"{ln}줄: <h1> 은 페이지 제목이 가져간다. 본문은 h2 부터 쓴다 "
+                 f"(이어 붙일 페이지가 h1 부터 쓰면 --h1)")
         if lvl == 6:
             warn(f"{ln}줄: <h6> 는 probe로 확인하지 않았다 (h2~h5만 확인)")
         if not text:
             warn(f"{ln}줄: <h{lvl}> 이 비어 있다")
         if prev is None:
-            if lvl > 2 and not probe_mode:
-                warn(f"{ln}줄: 첫 제목이 <h{lvl}> 이다. 본문은 h2 부터 시작한다")
+            if lvl > top and not probe_mode:
+                warn(f"{ln}줄: 첫 제목이 <h{lvl}> 이다. 본문은 h{top} 부터 시작한다")
         elif lvl > prev + 1:
             warn(f"{ln}줄: <h{prev}> 다음이 <h{lvl}> 이다. 단계를 건너뛰면 "
                  f"toc와 절 구분이 어긋난다")
@@ -229,11 +239,14 @@ def main(path):
     for bad, why in [("<!DOCTYPE", "조각에 DOCTYPE을 쓰지 않는다"),
                      ("<html", "조각에 <html>을 쓰지 않는다"),
                      ("<body", "조각에 <body>를 쓰지 않는다"),
-                     ("<thead", "<thead>는 저장 시 사라진다. <tr><th>만 쓴다"),
                      ("<style", "<style>은 무시된다")]:
         m = re.search(re.escape(bad), raw, re.IGNORECASE)
         if m:
             err(f"{lineno(raw, m.start())}줄: {why}")
+    m = re.search(r"<thead\b", raw, re.IGNORECASE)
+    if m:
+        warn(f"{lineno(raw, m.start())}줄: <thead> 는 저장은 되지만 이 스킬은 <tbody> 안 "
+             f"<tr><th> 로 통일한다. 기존 페이지에 있던 표면 그대로 둔다")
 
     wrapped = ('<root xmlns:ac="http://x/ac" xmlns:ri="http://x/ri">'
                + neutralize(raw) + "</root>")
@@ -305,7 +318,7 @@ def report():
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a != "--probe"]
+    args = [a for a in sys.argv[1:] if a not in ("--probe", "--h1")]
     if len(args) != 1:
-        sys.exit("usage: check.py [--probe] <file.xhtml>")
+        sys.exit("usage: check.py [--probe] [--h1] <file.xhtml>")
     main(args[0])

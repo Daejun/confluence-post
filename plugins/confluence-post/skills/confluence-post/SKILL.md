@@ -37,12 +37,31 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 `noformat` `anchor` `plantuml` `latex` `attachments` `recently-updated`
 
 **쓸 수 없는 매크로 (렌더링 안 되는 것을 확인)**
-`mermaid` `mermaid-cloud` `mathblock` `gliffy` `excerpt` `children`
+`mermaid` `mermaid-cloud` `mathblock` `gliffy`
 
 **조건부**
 - `drawio` — 설치돼 있다(미설치가 아니라 오류가 났다). 다만 다이어그램을 에디터에서
   그려야 하므로 XHTML로 저작할 수 없다. 스킬이 내지 않는다.
 - `jira` — 매크로는 있다. 실제 이슈 키로만 렌더링된다.
+- `excerpt` `children` — probe 에서는 안 보였지만 실제 페이지 수십 곳에서 쓰인다.
+  probe 페이지에 내용이 없어 비어 보였을 수 있다. 새로 넣지 않고, 기존 페이지에
+  있던 것만 옮긴다.
+
+## 실제 페이지에서 확인한 것 (2026-10-02)
+
+MCP 로 사내 페이지의 storage 원문을 읽어 본 것이다. **저장된 형태이지 렌더링 결과가
+아니다** — 다만 에디터가 만든 형태라면 렌더링도 되는 것으로 본다.
+
+- `class`(`wrapped`, `relative-table`), 표의 `style="width:…"`, `<colgroup>` 은
+  저장된다. 새로 쓸 때는 넣지 않고, 기존 페이지에 있던 것은 그대로 둔다.
+- `<thead>` 도 저장된다. 이 스킬은 `<tbody>` 안 `<tr><th>` 로 통일한다(probe 확인).
+- `colspan` 은 에디터가 만든 표에 쓰인다. `rowspan` 은 보지 못했다.
+- code 언어는 `c++` 가 가장 흔하다. probe 로 확인한 것은 `cpp` 다 — 새로 쓸 때는
+  `cpp`, 기존 페이지의 `c++` 는 그대로 둔다. language 없는 code 매크로도 흔하다.
+- 본문을 h1 부터 쓰는 페이지가 h2 부터 쓰는 페이지보다 많다. 이어 붙일 페이지가
+  h1 부터 쓰면 그 관례를 따르고 check.py 에 `--h1` 을 준다.
+- plantuml 매크로는 에디터가 `atlassian-macro-output-type=INLINE` 으로 저장한다.
+  `reference/plantuml.md`.
 
 ## 도식
 
@@ -67,8 +86,11 @@ A -> B: write
 - P1의 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지 확인하지 않았다.
   대조군도 색이 났다면 위 22종 중 일부는 기본 brush로 떨어진 것일 수 있다.
   결과는 색이 안 나는 것뿐이라 위험은 낮다.
-- Confluence 버전, space key, 초안을 둘 부모 페이지
-- 사내가 실제로 쓰는 매크로·파라미터 어휘 (기존 페이지 Edit Source)
+- Confluence 버전
+- `excerpt` `children` 이 내용이 있을 때 렌더링되는가
+- plantuml 에 `atlassian-macro-output-type=BLOCK` 을 주면 `<p>` 없이도 줄이 떨어지는가
+- `c++`, `rowspan`, 네이티브 체크박스(`<ac:task-list>`) — 실제 페이지에서도
+  체크박스는 보지 못했다
 
 ## 순서
 
@@ -100,7 +122,7 @@ A -> B: write
 
 3. **변환한다.** 매핑은 `reference/storage-format.md`, 완성된 예시는
    `reference/example.xhtml`. 외우지 말고 두 파일을 읽는다.
-   `colspan` 처럼 probe로 확인하지 않은 것은 쓰지 않는다.
+   `rowspan` 처럼 probe 로도, 실제 페이지에서도 확인하지 않은 것은 쓰지 않는다.
 
 4. **`out/<slug>.xhtml` 에 쓴다.** 기준은 **현재 작업 디렉터리**다 — 원본 markdown이
    있는 곳도, 스킬이 설치된 곳도 아니다. slug은 영문 kebab-case.
@@ -112,6 +134,7 @@ A -> B: write
    CHECK=$(find -L ~/.claude -path "*confluence-post/scripts/check.py" 2>/dev/null | head -1)
    python3 "$CHECK" out/<slug>.xhtml
    ```
+   이어 붙일 페이지가 본문을 h1 부터 쓰면 `--h1` 을 준다(6단계에서 확인한 관례).
    ERROR가 하나라도 있으면 고쳐서 다시 돌린다. 통과하지 않은 것을 사용자에게 주지 않는다.
    WARN 은 막지 않지만 그냥 넘기지 않는다 — 제목 단계 WARN 은 절 구분이 어긋났다는
    신호다. 고치거나, 그대로 두는 이유를 초안에 적는다.
@@ -124,7 +147,8 @@ A -> B: write
      뺀 절이 있으면 초안에서 무엇을 왜 뺐는지 밝힌다. 소리 없이 사라지면 안 된다.
    - **제목 단계가 대응하는가.** 원문 `#` 는 페이지 제목이 가져가므로 본문은 h2 부터다.
      `##`→h2, `###`→h3 로 문서 전체에 같은 규칙을 적용했는가. 한 절만 단계가 다르면
-     toc 가 어긋난다.
+     toc 가 어긋난다. 이어 붙일 페이지가 h1 부터 쓰면 한 단계씩 올려 `##`→h1 로
+     맞춘다.
    - **덩어리가 보존됐는가.** 목록의 중첩 단계, 표의 열 수와 헤더 행, 코드 블록의 개수와
      언어가 원문과 같은가. 원문에서 코드였던 것이 문단으로, 표였던 것이 목록으로
      뭉개지지 않았는가.

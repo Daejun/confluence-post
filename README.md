@@ -190,11 +190,12 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 `toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
 `recently-updated`
 
-**쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`
-`excerpt` `children`. 넣으면 check.py 가 ERROR로 막는다.
+**쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`.
+넣으면 check.py 가 ERROR로 막는다.
 
 **조건부** — `drawio` 는 설치돼 있으나 에디터에서 그려야 해 XHTML로 저작할 수 없다.
-`jira` 는 실제 이슈 키로만 렌더링된다.
+`jira` 는 실제 이슈 키로만 렌더링된다. `excerpt` `children` 은 probe 에서 안 보였지만
+실제 페이지에서 널리 쓰인다 — 기존 페이지에 있던 것만 옮긴다.
 
 **구조** — 3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
 링크 4종, 본문 이스케이프, h2~h5 전부 정상. 저장해도 Confluence가 XHTML을 다시 쓰지 않는다.
@@ -210,7 +211,11 @@ PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTM
 
 - P1 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지. 대조군도 색이 났다면 22종 중
   일부는 기본 brush로 떨어진 것일 수 있다. 결과는 색이 안 나는 것뿐이라 위험은 낮다.
-- Confluence 버전, space key, 초안을 둘 부모 페이지
+- Confluence 버전
+- `excerpt` `children` 의 렌더링, PlantUML `BLOCK` 출력, `c++`·`rowspan`·네이티브 체크박스
+
+실제 페이지의 storage 원문을 MCP 로 읽어 본 결과(class·`<thead>`·`colspan` 이 저장되고,
+본문을 h1 부터 쓰는 페이지가 많다 등)는 SKILL.md 의 "실제 페이지에서 확인한 것" 에 있다.
 
 ## 검사기
 
@@ -227,12 +232,13 @@ OK
 ```
 
 잡아내는 것: 이스케이프 안 된 `&` 와 `<`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
-`<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
+`<html>`·DOCTYPE, `<thead>`(WARN), `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
 미확인 code 언어, 제목 단계, `<p>` 밖의 PlantUML, MCP 조회 결과에서 그대로 옮긴
 첨부 이미지, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
 그 파일은 붙여넣지도 MCP 로 올리지도 않는다.
 
 `--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
+`--h1` 은 본문을 h1 부터 쓰는 페이지에 이어 붙일 때 준다. h1 WARN 을 끈다.
 
 ```bash
 python3 .../scripts/check.py --probe probe/P1-languages.xhtml

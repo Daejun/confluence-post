@@ -89,8 +89,13 @@ status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** 
 </tbody></table>
 ```
 
-헤더 행은 `<th>`. `<thead>`는 쓰지 않는다.
+헤더 행은 `<tbody>` 안의 `<th>`. `<thead>` 도 저장은 되지만 쓰지 않는다 — 한 가지로
+통일한다. 기존 페이지에 있던 `<thead>` 는 그대로 둔다.
 **`<td>` 안에 매크로를 넣을 수 있다** — 확인됨. 표 셀에 code 매크로가 들어간다.
+
+셀 병합은 `colspan` 만 쓴다 — 에디터가 만든 실제 표에 쓰인다. `rowspan` 은 확인되지
+않았다. `class`(`wrapped` 등)·`style="width:…"`·`<colgroup>` 은 저장되지만 새로 쓸 때는
+넣지 않는다. 기존 페이지 표에 있던 것은 그대로 둔다.
 
 ## 코드 — 확인됨
 
@@ -116,6 +121,9 @@ status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** 
 
 커널 코드는 `c`를 그대로 쓴다 — `cpp` 우회가 필요 없다. 패치는 `diff`.
 이 목록 밖 언어는 `text`로 낸다.
+
+실제 페이지에서는 `c++` 가 가장 흔하다. 확인된 건 `cpp` 이므로 새로 쓸 때는 `cpp`,
+기존 페이지의 `c++` 는 그대로 둔다(check.py 가 WARN 을 내지만 고치지 않는다).
 
 언어 없는 고정폭 블록은 `ac:name="noformat"` + `<ac:plain-text-body>`.
 
@@ -193,9 +201,11 @@ PlantUML 만이다 — code·expand·info 같은 매크로는 위 절의 형태 
 ## 쓰지 않는 것
 
 - ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장, 또는 PlantUML로 바꾼다.
-- `mermaid` `mermaid-cloud` `mathblock` `gliffy` `excerpt` `children`
-  — 렌더링되지 않는 것을 확인했다.
+- `mermaid` `mermaid-cloud` `mathblock` `gliffy` — 렌더링되지 않는 것을 확인했다.
+- `excerpt` `children` — 실제 페이지에서는 쓰이지만 렌더링을 다시 확인해야 한다.
+  새로 넣지 않고, 기존 페이지에 있던 것만 옮긴다.
 - `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
 - `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
 - 각주 — storage format에 대응이 없다. 본문으로 푼다. 체크박스는 위 `목록` 절을 본다.
-- `<thead>`, `<style>`, `class` 속성 — 저장 시 사라지거나 무시된다.
+- `<style>` — 무시된다.
+- `<thead>`, `class` 속성 — 저장은 되지만 새로 쓰지 않는다. 위 `표` 절.
