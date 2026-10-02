@@ -93,6 +93,8 @@ Claude Code 안에서:
 ```
 
 갱신은 `/plugin update confluence-post`, 제거는 `/plugin uninstall confluence-post`.
+갱신은 `plugin.json` 의 `version` 이 바뀌어야 받아진다 — 스킬을 고쳐 올리는 쪽은
+`version` 을 같이 올린다.
 재시작은 필요 없다. 설치됐는지는 `/plugin` 목록에서 확인한다.
 
 ### 고쳐가며 쓸 때는 clone + symlink
