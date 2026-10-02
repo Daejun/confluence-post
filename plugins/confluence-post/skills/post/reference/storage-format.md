@@ -1,8 +1,8 @@
 # markdown → Confluence DC storage format 매핑
 
 조각으로 낸다. `<!DOCTYPE>`, `<html>`, `<body>` 없음.
-아래에서 "확인됨"은 2026-08-28 probe로 실제 렌더링을 본 것, 나머지는 Confluence DC
-기본 매크로 기준이다.
+아래에서 "확인됨"은 probe(2026-08-28, 2026-10-02)로 실제 렌더링을 본 것, 나머지는
+Confluence DC 기본 매크로 기준이다.
 
 ## 들여쓰기 — CDATA 안만 예외
 
@@ -66,7 +66,8 @@ Edit Source에서 사람이 고칠 수 있어야 하므로 들여쓰는 편이 �
 
 ### 체크박스 — `status` 매크로를 앞에 붙인다
 
-markdown `- [x]` / `- [ ]` 에 대응하는 태그는 없다. 목록 구조는 그대로 두고 항목 앞에
+네이티브 체크박스 `<ac:task-list>` 는 보이기는 하지만, `ac:task-id` 없이 넣으면 클릭할
+때 저장 오류가 난다 — 확인됨. 쓰지 않는다. 목록 구조는 그대로 두고 항목 앞에
 status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** — 표기를 매번 새로
 정하지 않는다.
 
@@ -89,13 +90,13 @@ status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** 
 </tbody></table>
 ```
 
-헤더 행은 `<tbody>` 안의 `<th>`. `<thead>` 도 저장은 되지만 쓰지 않는다 — 한 가지로
+헤더 행은 `<tbody>` 안의 `<th>`. `<thead>` 도 렌더링되지만 쓰지 않는다 — 한 가지로
 통일한다. 기존 페이지에 있던 `<thead>` 는 그대로 둔다.
 **`<td>` 안에 매크로를 넣을 수 있다** — 확인됨. 표 셀에 code 매크로가 들어간다.
 
-셀 병합은 `colspan` 만 쓴다 — 에디터가 만든 실제 표에 쓰인다. `rowspan` 은 확인되지
-않았다. `class`(`wrapped` 등)·`style="width:…"`·`<colgroup>` 은 저장되지만 새로 쓸 때는
-넣지 않는다. 기존 페이지 표에 있던 것은 그대로 둔다.
+셀 병합 `colspan` `rowspan` — 확인됨. `class`(`wrapped` 등)·`style="width:…"`·
+`<colgroup>` 은 저장되지만 새로 쓸 때는 넣지 않는다. 기존 페이지 표에 있던 것은
+그대로 둔다.
 
 ## 코드 — 확인됨
 
@@ -113,17 +114,17 @@ status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** 
 - **CDATA 안에 `]]>` 가 있으면 안 된다.** 있으면 매크로를 둘로 나눈다.
 - `title` `linenumbers` `collapse` 파라미터 전부 동작한다. 긴 로그는 `collapse=true`.
 
-### 확인된 language (22종, 전부 하이라이팅됨)
+### 확인된 language (23종, 전부 하이라이팅됨)
 
-`c` `cpp` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
+`c` `cpp` `c++` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
 `javascript` `json` `yaml` `xml` `sql` `rust` `go` `perl` `powershell`
 `makefile` `ruby`
 
 커널 코드는 `c`를 그대로 쓴다 — `cpp` 우회가 필요 없다. 패치는 `diff`.
-이 목록 밖 언어는 `text`로 낸다.
+이 목록 밖 언어는 `text`로 낸다. 없는 언어는 회색으로 나온다.
 
-실제 페이지에서는 `c++` 가 가장 흔하다. 확인된 건 `cpp` 이므로 새로 쓸 때는 `cpp`,
-기존 페이지의 `c++` 는 그대로 둔다(check.py 가 WARN 을 내지만 고치지 않는다).
+**language 를 빼지 않는다.** 빼면 기본 언어로 칠해져 로그·명령 출력에 엉뚱한 색이
+든다. 코드가 아니면 `text`.
 
 언어 없는 고정폭 블록은 `ac:name="noformat"` + `<ac:plain-text-body>`.
 
@@ -189,21 +190,53 @@ A -> B: write
 @enduml]]></ac:plain-text-body></ac:structured-macro></p>
 ```
 
-**`<p>` 로 감싼다.** 최상위에 그냥 두면 위아래 텍스트에 붙어 나온다. 감싸는 것은
-PlantUML 만이다 — code·expand·info 같은 매크로는 위 절의 형태 그대로 둔다.
-자세한 건 `reference/plantuml.md`.
+**`<p>` 로 감싼다.** 위아래 텍스트에 붙어 나온 보고가 있었고 감싸서 고쳐졌다. 감싸도
+렌더링은 같다. 감싸는 것은 PlantUML 만이다 — code·expand·info 같은 매크로는 위 절의
+형태 그대로 둔다. 자세한 건 `reference/plantuml.md`.
 
 소스가 평문이라 XHTML에 그대로 담긴다. 다만 **기본은 도식 없음**이고,
 사용자가 도식을 요구했을 때만 낸다.
 
 수식은 `ac:name="latex"` + `<ac:plain-text-body>`. 설치 확인됨.
 
+## 그 밖의 매크로 — 확인됨
+
+markdown 에는 대응이 없어 변환할 때 새로 만들지는 않는다. 사용자가 요구했거나 기존
+페이지에 있던 것이면 이 형태로 쓴다.
+
+```xml
+<!-- 하위 페이지 목록 -->
+<ac:structured-macro ac:name="children"><ac:parameter ac:name="page"><ac:link><ri:page ri:content-title="부모 페이지 제목"/></ac:link></ac:parameter></ac:structured-macro>
+<!-- 트리. root 아래 -->
+<ac:structured-macro ac:name="pagetree"><ac:parameter ac:name="root"><ac:link><ri:page ri:content-title="부모 페이지 제목"/></ac:link></ac:parameter></ac:structured-macro>
+<!-- 다른 페이지 본문 끼워 넣기. 파라미터 이름이 빈 문자열이다 -->
+<ac:structured-macro ac:name="include"><ac:parameter ac:name=""><ac:link><ri:page ri:content-title="페이지 제목"/></ac:link></ac:parameter></ac:structured-macro>
+<!-- 발췌. 본문이 그대로 보인다 -->
+<ac:structured-macro ac:name="excerpt"><ac:rich-text-body><p>요약 한 줄</p></ac:rich-text-body></ac:structured-macro>
+<!-- page properties. 안에 2열 표 -->
+<ac:structured-macro ac:name="details"><ac:rich-text-body><table><tbody>
+<tr><th>상태</th><td>진행 중</td></tr>
+</tbody></table></ac:rich-text-body></ac:structured-macro>
+<!-- 2단 배치 -->
+<ac:structured-macro ac:name="section"><ac:rich-text-body>
+<ac:structured-macro ac:name="column"><ac:parameter ac:name="width">50%</ac:parameter><ac:rich-text-body><p>왼쪽</p></ac:rich-text-body></ac:structured-macro>
+<ac:structured-macro ac:name="column"><ac:parameter ac:name="width">50%</ac:parameter><ac:rich-text-body><p>오른쪽</p></ac:rich-text-body></ac:structured-macro>
+</ac:rich-text-body></ac:structured-macro>
+<!-- 표를 그래프로. 첫 행이 헤더. 쉼표 넣은 값(18,400)은 시험하지 않았다 -->
+<ac:structured-macro ac:name="chart"><ac:parameter ac:name="type">bar</ac:parameter><ac:parameter ac:name="title">제목</ac:parameter><ac:rich-text-body><table><tbody>
+<tr><th>fs</th><th>IOPS</th></tr>
+<tr><td>a</td><td>18400</td></tr>
+</tbody></table></ac:rich-text-body></ac:structured-macro>
+```
+
+`ri:content-title` 은 같은 space 의 페이지 제목과 글자 그대로 같아야 한다. MCP 가
+있으면 CQL `title = "…" and space = "…"` 로 있는지 확인한다.
+
 ## 쓰지 않는 것
 
 - ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장, 또는 PlantUML로 바꾼다.
 - `mermaid` `mermaid-cloud` `mathblock` `gliffy` — 렌더링되지 않는 것을 확인했다.
-- `excerpt` `children` — 실제 페이지에서는 쓰이지만 렌더링을 다시 확인해야 한다.
-  새로 넣지 않고, 기존 페이지에 있던 것만 옮긴다.
+  저장하면 `<ac:macro>` 로 바뀌고 본문이 지워진다.
 - `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
 - `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
 - 각주 — storage format에 대응이 없다. 본문으로 푼다. 체크박스는 위 `목록` 절을 본다.

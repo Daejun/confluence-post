@@ -180,28 +180,35 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 **이미지가 있으면 먼저 첨부한다.** 검사기가 첨부해야 할 파일 목록을 따로 알려준다.
 첨부 없이 저장하면 깨진 이미지로 나온다.
 
-## 쓸 수 있는 것 (2026-08-28 실측)
+## 쓸 수 있는 것 (2026-08-28, 2026-10-02 실측)
 
 `probe/` 로 실제 렌더링을 확인한 결과다. 추측이 아니다.
 
-**code 언어 22종 전부 하이라이팅** — `c` `cpp` `diff` `bash` `shell` `text` `none`
-`python` `py` `java` `js` `javascript` `json` `yaml` `xml` `sql` `rust` `go`
-`perl` `powershell` `makefile` `ruby`. 커널 코드에 `cpp` 우회가 필요 없다.
-`title` `linenumbers` `collapse` 파라미터도 동작한다.
+**code 언어 23종 전부 하이라이팅** — `c` `cpp` `c++` `diff` `bash` `shell` `text`
+`none` `python` `py` `java` `js` `javascript` `json` `yaml` `xml` `sql` `rust` `go`
+`perl` `powershell` `makefile` `ruby`. 커널 코드에 `cpp` 우회가 필요 없다. 없는 언어는
+회색으로 나오고, language 를 빼면 기본 언어로 칠해진다. `title` `linenumbers`
+`collapse` 파라미터도 동작한다.
 
 **쓸 수 있는 매크로** — `code` `expand` `info` `note` `warning` `tip` `panel`
 `toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
-`recently-updated`
+`recently-updated` `excerpt` `children` `pagetree` `include` `details` `section`
+`column` `chart`
 
 **쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`.
-넣으면 check.py 가 ERROR로 막는다.
+저장하면 Confluence 가 `<ac:macro>` 로 바꾸고 본문을 지운다. check.py 가 ERROR로 막는다.
 
 **조건부** — `drawio` 는 설치돼 있으나 에디터에서 그려야 해 XHTML로 저작할 수 없다.
-`jira` 는 실제 이슈 키로만 렌더링된다. `excerpt` `children` 은 probe 에서 안 보였지만
-실제 페이지에서 널리 쓰인다 — 기존 페이지에 있던 것만 옮긴다.
+`jira` 는 실제 이슈 키로만 렌더링된다. 체크박스(`ac:task-list`)는 보이지만 `task-id`
+없이 넣으면 클릭할 때 저장 오류가 나서, markdown 체크박스는 status 매크로로 바꾼다.
 
 **구조** — 3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
-링크 4종, 본문 이스케이프, h2~h5 전부 정상. 저장해도 Confluence가 XHTML을 다시 쓰지 않는다.
+링크 4종, 본문 이스케이프, h2~h6, `colspan`·`rowspan`·`<thead>` 전부 정상. Edit Source
+로 저장해도 Confluence가 XHTML을 다시 쓰지 않는다.
+
+**매크로 설치 여부는 MCP 로도 안다.** 페이지에 올린 뒤 다시 읽으면 설치된 매크로는
+`ac:structured-macro` 로 남고 `ac:macro-id` 가 붙는다. 설치 안 된 매크로는 `<ac:macro>`
+로 바뀐다. 스킬이 게시 후 이것을 확인한다.
 
 ### 도식
 
@@ -212,12 +219,12 @@ PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTM
 
 ### 남은 미확인
 
-- P1 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지. 대조군도 색이 났다면 22종 중
-  일부는 기본 brush로 떨어진 것일 수 있다. 결과는 색이 안 나는 것뿐이라 위험은 낮다.
 - Confluence 버전
-- `excerpt` `children` 의 렌더링, PlantUML `BLOCK` 출력, `c++`·`rowspan`·네이티브 체크박스
+- `task-id` 를 넣은 체크박스가 클릭해 저장되는가
+- PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다.
+  `<p>` 로 감싸면 고쳐졌고, 감싸도 렌더링은 같아서 감싸 둔다
 
-실제 페이지의 storage 원문을 MCP 로 읽어 본 결과(class·`<thead>`·`colspan` 이 저장되고,
+실제 페이지의 storage 원문을 MCP 로 읽어 본 결과(class·`<colgroup>` 이 저장되고,
 본문을 h1 부터 쓰는 페이지가 많다 등)는 SKILL.md 의 "실제 페이지에서 확인한 것" 에 있다.
 
 ## 검사기
@@ -260,10 +267,11 @@ python3 .../scripts/check.py --probe probe/P1-languages.xhtml
 | `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
 | `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
 | `probe/ANSWER.md` | 1차 실측 응답표 |
-| `probe/ANSWER-P.md` | 2차 응답표 — P1~P3 렌더링 결과 |
+| `probe/ANSWER-P.md` | 2차 응답표 — P1~P3, P5 렌더링 결과 |
 | `probe/P1-languages.xhtml` | code 언어 22종 + 대조군 |
 | `probe/P2-macros.xhtml` | 매크로 22종 + 대조군 |
 | `probe/P3-structure.xhtml` | 표·링크·이스케이프·중첩 12항목 |
 | `probe/P4-plantuml.xhtml` | PlantUML 다이어그램 타입 |
+| `probe/P5-mcp.xhtml` | MCP 로 올려 확인한 매크로·PlantUML 배치·언어·표·체크박스 |
 | `probe/optional/` | wiki markup 전수 probe. 경로를 바꾸게 되면 사용 |
 | `out/` | 스킬이 만든 조각 파일 |

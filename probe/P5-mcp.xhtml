@@ -1,0 +1,102 @@
+<p>confluence-post 스킬 검증용 테스트 페이지다. 각 항목 라벨(M01, P1, L01, S01)이 화면에 나온다. 확인이 끝나면 지운다.</p>
+<h2>A. 매크로</h2>
+<h3>M01 code (대조군: 확인됨)</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c</ac:parameter><ac:plain-text-body><![CDATA[int m01 = 1;]]></ac:plain-text-body></ac:structured-macro>
+<h3>M02 zzznotamacro (대조군: 없는 매크로)</h3>
+<ac:structured-macro ac:name="zzznotamacro"><ac:rich-text-body><p>M02 본문</p></ac:rich-text-body></ac:structured-macro>
+<h3>M03 mermaid</h3>
+<ac:structured-macro ac:name="mermaid"><ac:plain-text-body><![CDATA[graph LR; A-->B]]></ac:plain-text-body></ac:structured-macro>
+<h3>M04 gliffy</h3>
+<ac:structured-macro ac:name="gliffy"><ac:parameter ac:name="name">m04</ac:parameter></ac:structured-macro>
+<h3>M05 mathblock</h3>
+<ac:structured-macro ac:name="mathblock"><ac:plain-text-body><![CDATA[x^2 + y^2 = z^2]]></ac:plain-text-body></ac:structured-macro>
+<h3>M06 drawio (대조군: 설치됨, 다이어그램 없음)</h3>
+<ac:structured-macro ac:name="drawio"><ac:parameter ac:name="diagramName">m06</ac:parameter></ac:structured-macro>
+<h3>M07 excerpt (내용 있음)</h3>
+<ac:structured-macro ac:name="excerpt"><ac:rich-text-body><p>M07 발췌 본문이 보이면 렌더링된 것</p></ac:rich-text-body></ac:structured-macro>
+<h3>M08 children (부모 페이지의 자식 목록)</h3>
+<ac:structured-macro ac:name="children"><ac:parameter ac:name="page"><ac:link><ri:page ri:content-title="inode 내 file mapping 관리"/></ac:link></ac:parameter></ac:structured-macro>
+<h3>M09 pagetree (부모 페이지 기준)</h3>
+<ac:structured-macro ac:name="pagetree"><ac:parameter ac:name="root"><ac:link><ri:page ri:content-title="inode 내 file mapping 관리"/></ac:link></ac:parameter></ac:structured-macro>
+<h3>M10 include (부모 페이지 본문)</h3>
+<ac:structured-macro ac:name="include"><ac:parameter ac:name=""><ac:link><ri:page ri:content-title="inode 내 file mapping 관리"/></ac:link></ac:parameter></ac:structured-macro>
+<h3>M11 details (page properties)</h3>
+<ac:structured-macro ac:name="details"><ac:rich-text-body><table><tbody>
+<tr><th>M11 항목</th><td>M11 값</td></tr>
+</tbody></table></ac:rich-text-body></ac:structured-macro>
+<h3>M12 section + column</h3>
+<ac:structured-macro ac:name="section"><ac:rich-text-body>
+<ac:structured-macro ac:name="column"><ac:parameter ac:name="width">50%</ac:parameter><ac:rich-text-body><p>M12 왼쪽</p></ac:rich-text-body></ac:structured-macro>
+<ac:structured-macro ac:name="column"><ac:parameter ac:name="width">50%</ac:parameter><ac:rich-text-body><p>M12 오른쪽</p></ac:rich-text-body></ac:structured-macro>
+</ac:rich-text-body></ac:structured-macro>
+<h3>M13 chart (표를 막대그래프로)</h3>
+<ac:structured-macro ac:name="chart"><ac:parameter ac:name="type">bar</ac:parameter><ac:parameter ac:name="title">M13</ac:parameter><ac:rich-text-body><table><tbody>
+<tr><th>fs</th><th>IOPS</th></tr>
+<tr><td>a</td><td>18400</td></tr>
+<tr><td>b</td><td>20600</td></tr>
+</tbody></table></ac:rich-text-body></ac:structured-macro>
+<h3>M14 table-filter</h3>
+<ac:structured-macro ac:name="table-filter"><ac:rich-text-body><table><tbody>
+<tr><th>M14 열</th><th>값</th></tr>
+<tr><td>x</td><td>1</td></tr>
+<tr><td>y</td><td>2</td></tr>
+</tbody></table></ac:rich-text-body></ac:structured-macro>
+<h2>B. PlantUML 배치</h2>
+<p>P1 위 문장 — 최상위, 파라미터 없음</p>
+<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+A -> B: P1
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<p>P1 아래 문장</p>
+<p>P2 위 문장 — p 로 감쌈</p>
+<p><ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+A -> B: P2
+@enduml]]></ac:plain-text-body></ac:structured-macro></p>
+<p>P2 아래 문장</p>
+<p>P3 위 문장 — 최상위, BLOCK</p>
+<ac:structured-macro ac:name="plantuml"><ac:parameter ac:name="atlassian-macro-output-type">BLOCK</ac:parameter><ac:plain-text-body><![CDATA[@startuml
+A -> B: P3
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<p>P3 아래 문장</p>
+<p>P4 위 문장 — 최상위, INLINE (에디터 기본값)</p>
+<ac:structured-macro ac:name="plantuml"><ac:parameter ac:name="atlassian-macro-output-type">INLINE</ac:parameter><ac:plain-text-body><![CDATA[@startuml
+A -> B: P4
+@enduml]]></ac:plain-text-body></ac:structured-macro>
+<p>P4 아래 문장</p>
+<h2>C. code 언어</h2>
+<h3>L01 cpp</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">cpp</ac:parameter><ac:plain-text-body><![CDATA[template <typename T> class L01 { public: int x = 0; };]]></ac:plain-text-body></ac:structured-macro>
+<h3>L02 c++</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">c++</ac:parameter><ac:plain-text-body><![CDATA[template <typename T> class L02 { public: int x = 0; };]]></ac:plain-text-body></ac:structured-macro>
+<h3>L03 zzznotalang (대조군: 없는 언어)</h3>
+<ac:structured-macro ac:name="code"><ac:parameter ac:name="language">zzznotalang</ac:parameter><ac:plain-text-body><![CDATA[template <typename T> class L03 { public: int x = 0; };]]></ac:plain-text-body></ac:structured-macro>
+<h3>L04 language 없음</h3>
+<ac:structured-macro ac:name="code"><ac:plain-text-body><![CDATA[template <typename T> class L04 { public: int x = 0; };]]></ac:plain-text-body></ac:structured-macro>
+<h2>D. 표·체크박스·제목</h2>
+<h3>S01 colspan</h3>
+<table><tbody>
+<tr><th>a</th><th>b</th></tr>
+<tr><td colspan="2">S01 두 칸 병합</td></tr>
+</tbody></table>
+<h3>S02 rowspan</h3>
+<table><tbody>
+<tr><th>a</th><th>b</th></tr>
+<tr><td rowspan="2">S02 두 줄 병합</td><td>1</td></tr>
+<tr><td>2</td></tr>
+</tbody></table>
+<h3>S03 thead</h3>
+<table><thead><tr><th>S03 헤더</th><th>b</th></tr></thead><tbody>
+<tr><td>1</td><td>2</td></tr>
+</tbody></table>
+<h3>S04 체크박스 (ac:task-list)</h3>
+<ac:task-list>
+<ac:task><ac:task-status>complete</ac:task-status><ac:task-body>S04 완료 항목</ac:task-body></ac:task>
+<ac:task><ac:task-status>incomplete</ac:task-status><ac:task-body>S04 미완료 항목</ac:task-body></ac:task>
+</ac:task-list>
+<h3>S04b 체크박스 (task-id 있음)</h3>
+<ac:task-list>
+<ac:task><ac:task-id>1</ac:task-id><ac:task-status>complete</ac:task-status><ac:task-body>S04b 완료 항목</ac:task-body></ac:task>
+<ac:task><ac:task-id>2</ac:task-id><ac:task-status>incomplete</ac:task-status><ac:task-body>S04b 미완료 항목</ac:task-body></ac:task>
+</ac:task-list>
+<h3>S05 h6</h3>
+<h6>S05 여섯째 단계 제목</h6>
+<p>S05 끝</p>

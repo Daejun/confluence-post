@@ -9,22 +9,17 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
-# probe(2026-08-28)로 렌더링을 직접 확인한 매크로. 그대로 써도 된다.
+# probe(2026-08-28, 2026-10-02)로 렌더링을 직접 확인한 매크로. 그대로 써도 된다.
 CONFIRMED = {"code", "expand", "info", "note", "warning", "tip", "panel",
              "toc", "status", "noformat", "anchor", "plantuml", "latex",
-             "attachments", "recently-updated"}
+             "attachments", "recently-updated", "excerpt", "children",
+             "pagetree", "include", "details", "section", "column", "chart"}
 # 설치돼 있지만 조건이 붙는 것
 CONDITIONAL = {
     "jira": "실제 이슈 키로만 렌더링된다. 없는 키는 오류가 난다",
     "drawio": "설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다",
-    # probe 에서는 안 보였지만 실제 페이지 수십 곳에서 최근까지 쓰인다. probe 페이지에
-    # 하위 페이지·발췌 대상이 없어 비어 보였을 수 있다.
-    "excerpt": "실제 페이지에서 쓰이나 렌더링은 다시 확인해야 한다. 새로 넣지 않고 "
-               "기존 페이지에 있던 것만 옮긴다",
-    "children": "실제 페이지에서 쓰이나 렌더링은 다시 확인해야 한다. 새로 넣지 않고 "
-                "기존 페이지에 있던 것만 옮긴다",
 }
-# 렌더링이 안 되는 것을 probe로 확인했다
+# 렌더링이 안 되는 것을 probe로 확인했다. 저장하면 <ac:macro> 로 바뀌고 본문이 지워진다
 UNAVAILABLE = {
     "mermaid": "미설치", "mermaid-cloud": "미설치", "mathblock": "미설치",
     "gliffy": "미설치",
@@ -53,7 +48,7 @@ PUML_WARN = [
 ]
 
 # probe로 하이라이팅을 확인한 code language
-TESTED_LANGS = {"c", "cpp", "diff", "bash", "shell", "text", "none", "python",
+TESTED_LANGS = {"c", "cpp", "c++", "diff", "bash", "shell", "text", "none", "python",
                 "py", "java", "js", "javascript", "json", "yaml", "xml", "sql",
                 "rust", "go", "perl", "powershell", "makefile", "ruby"}
 
@@ -165,8 +160,6 @@ def check_headings(raw):
         if lvl == 1 and not h1_mode:
             warn(f"{ln}줄: <h1> 은 페이지 제목이 가져간다. 본문은 h2 부터 쓴다 "
                  f"(이어 붙일 페이지가 h1 부터 쓰면 --h1)")
-        if lvl == 6:
-            warn(f"{ln}줄: <h6> 는 probe로 확인하지 않았다 (h2~h5만 확인)")
         if not text:
             warn(f"{ln}줄: <h{lvl}> 이 비어 있다")
         if prev is None:
@@ -281,15 +274,32 @@ def main(path):
                 b = el.find(f"{{{NS['ac']}}}plain-text-body")
                 check_plantuml(b.text or "" if b is not None else "")
                 if parent[el].tag != "p" and not probe_mode:
-                    warn("plantuml 매크로가 <p> 밖에 있다. inline 으로 그려져 위아래 "
-                         "텍스트에 붙는다 — <p> 로 감싼다")
+                    warn("plantuml 매크로가 <p> 밖에 있다. 위아래 텍스트에 붙어 나온 "
+                         "보고가 있었다 — <p> 로 감싼다 (감싸도 렌더링은 같다)")
             if name == "code":
                 lang = el.find(f"{{{NS['ac']}}}parameter[@{{{NS['ac']}}}name='language']")
-                if lang is not None and (lang.text or "") not in TESTED_LANGS:
+                if lang is None and not probe_mode:
+                    warn("code 매크로에 language 가 없다. 기본 언어로 칠해진다 — "
+                         "코드가 아니면 text")
+                elif lang is not None and (lang.text or "") not in TESTED_LANGS:
                     warn(f"code language=`{lang.text}`: probe로 확인하지 않은 언어다. "
                          f"확실치 않으면 text")
             if name in ("code", "noformat"):
                 check_cdata_head(el, name)
+        if tag == f"{{{NS['ac']}}}macro":
+            # 저장할 때 Confluence 는 모르는 매크로를 이 옛 형식으로 바꾸고 본문을 지운다.
+            # 이름이 아는 매크로면 오래된 페이지에 남은 옛 형식일 수 있다.
+            name = el.get(f"{{{NS['ac']}}}name", "")
+            if name in CONFIRMED or name in CONDITIONAL:
+                warn(f"`<ac:macro ac:name=\"{name}\">` 는 옛 형식이다. "
+                     f"<ac:structured-macro> 로 쓴다")
+            else:
+                err(f"`<ac:macro ac:name=\"{name}\">` 는 설치되지 않은 매크로가 저장되며 "
+                    f"바뀐 형태다. 본문은 이미 지워졌다 — 빼거나 원래 내용을 다시 쓴다")
+        if tag == f"{{{NS['ac']}}}task" and not probe_mode \
+                and el.find(f"{{{NS['ac']}}}task-id") is None:
+            err("<ac:task> 에 <ac:task-id> 가 없다. 체크박스를 누르면 저장 오류가 난다 — "
+                "status 매크로로 바꾼다")
         if tag in ("ul", "ol") and parent.get(el) is not None \
                 and parent[el].tag in ("ul", "ol"):
             err("중첩 목록이 <li> 밖에 있다. 부모 <li> 안으로 넣는다")

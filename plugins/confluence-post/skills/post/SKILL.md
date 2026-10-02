@@ -14,7 +14,7 @@ storage format 을 직접 넣어 둘 다 우회하고, 그 두 경로에만 있�
 조각이므로 `<!DOCTYPE>`, `<html>`, `<body>`를 쓰지 않는다. 최상위는 `<p>`, `<h2>`,
 `<table>`, `<ac:structured-macro>` 같은 요소들이 나열된 형태다.
 
-## 확정된 환경 (2026-08-28 실측)
+## 확정된 환경 (2026-08-28, 2026-10-02 실측)
 
 probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 
@@ -22,46 +22,51 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 - Edit Source 편집·저장 가능. 저장해도 Confluence가 XHTML을 다시 쓰지 않는다
 - 표 `<td>` 안에 code·expand 매크로가 들어간다
 - CDATA 안의 `&` `<` `|` 가 그대로 나온다
-- 8열 표, 긴 코드 한 줄, 3단 중첩 목록, h2~h5, blockquote, hr, 인라인 서식,
-  외부·앵커·페이지 링크, 본문 이스케이프 — 전부 정상
+- 8열 표, 긴 코드 한 줄, 3단 중첩 목록, h2~h6, blockquote, hr, 인라인 서식,
+  외부·앵커·페이지 링크, 본문 이스케이프, `colspan`, `rowspan`, `<thead>` — 전부 정상
 
-**code 언어 — 시험한 22종이 전부 하이라이팅된다**
-`c` `cpp` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
+**code 언어 — 시험한 23종이 전부 하이라이팅된다**
+`c` `cpp` `c++` `diff` `bash` `shell` `text` `none` `python` `py` `java` `js`
 `javascript` `json` `yaml` `xml` `sql` `rust` `go` `perl` `powershell`
 `makefile` `ruby`. `cpp` 우회가 필요 없다. 이 목록 밖 언어는 `text`로 낸다.
+없는 언어는 회색(하이라이팅 없음)으로 나오므로 위 목록은 진짜로 칠해진 것이다.
+**language 를 빼면 기본 언어로 칠해진다** — 로그·명령 출력은 `text` 를 준다.
 
 `title` `linenumbers` `collapse` 파라미터도 동작한다.
 
 **쓸 수 있는 매크로**
 `code` `expand` `info` `note` `warning` `tip` `panel` `toc` `status`
 `noformat` `anchor` `plantuml` `latex` `attachments` `recently-updated`
+`excerpt` `children` `pagetree` `include` `details` `section` `column` `chart`
 
 **쓸 수 없는 매크로 (렌더링 안 되는 것을 확인)**
-`mermaid` `mermaid-cloud` `mathblock` `gliffy`
+`mermaid` `mermaid-cloud` `mathblock` `gliffy`. 넣고 저장하면 Confluence 가
+`<ac:macro>` 로 바꾸고 **본문을 지운다** — mermaid 소스가 소리 없이 사라진다.
 
 **조건부**
 - `drawio` — 설치돼 있다(미설치가 아니라 오류가 났다). 다만 다이어그램을 에디터에서
   그려야 하므로 XHTML로 저작할 수 없다. 스킬이 내지 않는다.
 - `jira` — 매크로는 있다. 실제 이슈 키로만 렌더링된다.
-- `excerpt` `children` — probe 에서는 안 보였지만 실제 페이지 수십 곳에서 쓰인다.
-  probe 페이지에 내용이 없어 비어 보였을 수 있다. 새로 넣지 않고, 기존 페이지에
-  있던 것만 옮긴다.
+- 체크박스(`<ac:task-list>`) — 보이기는 하지만 `ac:task-id` 없이 넣으면 클릭할 때
+  저장 오류가 난다. 쓰지 않는다. markdown 체크박스는 status 매크로로 바꾼다.
+
+**매크로 설치 여부는 저장 후 다시 읽으면 안다.** 설치된 매크로는
+`ac:structured-macro` 로 남고 `ac:macro-id`·`ac:schema-version` 이 붙는다. 설치되지
+않은 매크로는 `<ac:macro>` 로 바뀐다. 렌더링을 보지 않고도 구분된다.
 
 ## 실제 페이지에서 확인한 것 (2026-10-02)
 
-MCP 로 사내 페이지의 storage 원문을 읽어 본 것이다. **저장된 형태이지 렌더링 결과가
-아니다** — 다만 에디터가 만든 형태라면 렌더링도 되는 것으로 본다.
+MCP 로 사내 페이지의 storage 원문을 읽어 본 것이다. 렌더링 결과가 아니라 저장된
+형태다.
 
 - `class`(`wrapped`, `relative-table`), 표의 `style="width:…"`, `<colgroup>` 은
   저장된다. 새로 쓸 때는 넣지 않고, 기존 페이지에 있던 것은 그대로 둔다.
-- `<thead>` 도 저장된다. 이 스킬은 `<tbody>` 안 `<tr><th>` 로 통일한다(probe 확인).
-- `colspan` 은 에디터가 만든 표에 쓰인다. `rowspan` 은 보지 못했다.
-- code 언어는 `c++` 가 가장 흔하다. probe 로 확인한 것은 `cpp` 다 — 새로 쓸 때는
-  `cpp`, 기존 페이지의 `c++` 는 그대로 둔다. language 없는 code 매크로도 흔하다.
+- `<thead>` 는 렌더링도 되지만 이 스킬은 `<tbody>` 안 `<tr><th>` 로 통일한다.
+- code 언어는 `c++` 가 가장 흔하고, language 없는 code 매크로도 흔하다.
 - 본문을 h1 부터 쓰는 페이지가 h2 부터 쓰는 페이지보다 많다. 이어 붙일 페이지가
   h1 부터 쓰면 그 관례를 따르고 check.py 에 `--h1` 을 준다.
 - plantuml 매크로는 에디터가 `atlassian-macro-output-type=INLINE` 으로 저장한다.
-  `reference/plantuml.md`.
+  줄 나뉨에는 영향이 없다. `reference/plantuml.md`.
 
 ## 도식
 
@@ -83,14 +88,9 @@ A -> B: write
 
 ## 아직 확인 안 된 것
 
-- P1의 대조군(없는 언어 `zzznotalang`)이 어떻게 보였는지 확인하지 않았다.
-  대조군도 색이 났다면 위 22종 중 일부는 기본 brush로 떨어진 것일 수 있다.
-  결과는 색이 안 나는 것뿐이라 위험은 낮다.
 - Confluence 버전
-- `excerpt` `children` 이 내용이 있을 때 렌더링되는가
-- plantuml 에 `atlassian-macro-output-type=BLOCK` 을 주면 `<p>` 없이도 줄이 떨어지는가
-- `c++`, `rowspan`, 네이티브 체크박스(`<ac:task-list>`) — 실제 페이지에서도
-  체크박스는 보지 못했다
+- `ac:task-id` 를 넣은 체크박스는 클릭해 저장되는가
+- PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다
 
 ## 순서
 
@@ -122,7 +122,7 @@ A -> B: write
 
 3. **변환한다.** 매핑은 `reference/storage-format.md`, 완성된 예시는
    `reference/example.xhtml`. 외우지 말고 두 파일을 읽는다.
-   `rowspan` 처럼 probe 로도, 실제 페이지에서도 확인하지 않은 것은 쓰지 않는다.
+   위 "확정된 환경" 에 없는 매크로·언어는 쓰지 않는다.
 
 4. **`out/<slug>.xhtml` 에 쓴다.** 기준은 **현재 작업 디렉터리**다 — 원본 markdown이
    있는 곳도, 스킬이 설치된 곳도 아니다. slug은 영문 kebab-case.
@@ -209,13 +209,13 @@ A -> B: write
 - **중첩 목록은 부모 `<li>` 안에 넣는다.** `<ul>` 형제로 두면 목록이 끊긴다.
 - **이미지는 먼저 첨부해야 한다.** `<ac:image>`만 넣고 첨부를 안 하면 깨진 이미지가 된다.
   첨부가 필요한 파일은 초안에서 목록으로 따로 알려준다.
-- **미설치 매크로를 쓰지 않는다.** mermaid·mathblock·gliffy는 렌더링되지 않는다.
-  check.py가 ERROR로 걸러낸다.
+- **미설치 매크로를 쓰지 않는다.** mermaid·mathblock·gliffy는 렌더링되지 않고,
+  저장하는 순간 본문이 지워진다. check.py가 ERROR로 걸러낸다.
 - **PlantUML 소스에 `]]>` 가 들어가지 않게 한다.** CDATA가 거기서 끊긴다.
-- **PlantUML 매크로는 `<p> ... </p>` 로 감싼다.** 감싸지 않으면 소스에 빈 줄이
-  있어도 위아래 텍스트에 붙어 한 줄로 나온다 — PlantUML 매크로가 inline 으로
-  그려지기 때문이다. **PlantUML 만** 감싼다. code·expand·info 는 감싸지 않는다.
-  `reference/plantuml.md` 참조.
+- **PlantUML 매크로는 `<p> ... </p>` 로 감싼다.** 위아래 텍스트에 붙어 나온 보고가
+  있었고 감싸서 고쳐졌다. probe 에서는 감싸지 않아도 줄이 나뉘었으니 원인은 따로
+  있지만, 감싸도 렌더링은 같으므로 감싸 둔다. **PlantUML 만** 감싼다.
+  code·expand·info 는 감싸지 않는다. `reference/plantuml.md` 참조.
 - **CDATA 안을 들여쓰지 않는다.** 요소 사이 들여쓰기는 렌더링에 영향이 없지만,
   CDATA 안의 공백은 코드 내용 그 자체다. `<![CDATA[` 바로 뒤부터 내용을 시작하고
   `]]>` 는 마지막 줄 끝에 붙인다. 코드 자체의 들여쓰기(커널이면 탭)는 그대로 살린다.

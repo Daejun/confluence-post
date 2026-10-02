@@ -76,3 +76,43 @@ V17 listfonts — 폰트 목록이 나오면 한글 폰트가 있는지 =
 - V12~V15 중 되는 것을 `check.py` 의 `PUML_ALLOWED` 에 넣는다.
 - V10 이 되면 `!theme` 금지를 푼다.
 - V11 이 되면(예상 밖) `!include` 금지를 완화한다.
+
+---
+
+# P5 — MCP 로 올려 확인 (`probe/P5-mcp.xhtml`, 2026-10-02)
+
+Confluence MCP 의 `create_page` 로 테스트 페이지를 만들고, `get_page` 로 저장된 원문을
+다시 읽은 뒤 브라우저에서 렌더링을 봤다.
+
+## 다시 읽은 원문 — 렌더링 없이 아는 것
+
+| 저장 후 형태 | 매크로 |
+|---|---|
+| `ac:structured-macro` 유지 + `ac:macro-id`·`ac:schema-version` 추가 | code, excerpt, children(schema 2), pagetree, include, details, section, column, chart, table-filter, drawio, plantuml |
+| 옛 형식 `<ac:macro>` 로 바뀜 | mermaid, mathblock (plain-text 본문 삭제), gliffy, `zzznotamacro`(대조군) |
+
+- 설치 안 된 매크로는 저장하는 순간 `<ac:macro>` 가 되고 plain-text 본문이 지워진다.
+- drawio 는 `revision=1`, table-filter 는 `id` 파라미터가 저장 때 붙었다 — 플러그인이 살아 있다.
+- plantuml 에 `atlassian-macro-output-type` 은 붙지 않았다. `INLINE` 은 에디터가 붙이는 값이다.
+- code 의 language 는 검증하지 않는다. 없는 언어도 그대로 저장된다.
+- `colspan` `rowspan` `<thead>` `ac:task-list` h6 은 그대로 저장됐다. `ac:task-id` 는 붙지 않았다.
+
+## 브라우저 렌더링
+
+- **P1~P4 PlantUML** — 최상위, `<p>` 감쌈, `BLOCK`, `INLINE` 네 가지 모두 위아래 문장과
+  다른 줄에 나왔다. 붙어 나오는 현상은 재현되지 않았다.
+- **L01~L04 code** — `cpp` `c++` language 없음은 칠해졌고, 없는 언어(L03)만 회색이었다.
+  P1 대조군 미확인이 풀렸다: 확인된 22종은 진짜로 칠해진 것이다.
+- **M07~M13** — excerpt, children, pagetree, include, details, section/column, chart 정상.
+- **S01~S05** — colspan, rowspan, thead, h6 정상. 체크박스는 보이지만 누르면 "저장할 수
+  없다" 오류. `task-id` 를 넣은 S04b 를 추가했다(결과 대기).
+
+## 이 결과가 반영된 곳
+
+- `plugins/confluence-post/skills/post/SKILL.md` — 확정된 환경, 설치 여부 확인법
+- `plugins/confluence-post/skills/post/reference/storage-format.md` — 언어 23종, 표 병합,
+  그 밖의 매크로, 체크박스
+- `plugins/confluence-post/skills/post/reference/plantuml.md` — `<p>` 감싸기의 근거
+- `plugins/confluence-post/skills/post/reference/existing-page.md` — 게시 후 `<ac:macro>` 확인
+- `plugins/confluence-post/skills/post/scripts/check.py` — CONFIRMED, TESTED_LANGS,
+  `<ac:macro>`·`task-id` 없는 체크박스·language 없는 code

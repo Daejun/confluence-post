@@ -49,7 +49,8 @@ Edit Source 로 저장하면 XHTML 이 그대로 남지만, **일반 편집 화�
 | `data-uuid` (`<li>` 등) | 둔다 | 지운다 |
 | `class=""`, `<span style="font-family:…">`, `style="letter-spacing:…"` | 둔다 | 지운다 |
 | `<ac:inline-comment-marker>` | **둔다.** 지우면 달린 코멘트가 고아가 된다 | 태그만 벗기고 글자는 남긴다 |
-| plantuml 의 `atlassian-macro-output-type` | 둔다 | 지운다. `<p>` 감싸기로 대신한다 |
+| plantuml 의 `atlassian-macro-output-type` | 둔다 | 지운다. 값과 상관없이 렌더링이 같다 |
+| `<ac:macro ac:name="…">` (옛 형식) | 이름이 설치 안 된 매크로면 저장 때 바뀐 흔적이고 본문은 이미 없다 — 사용자에게 알린다. 아는 매크로면 오래된 페이지의 옛 형식이다 — `ac:structured-macro` 로 바꾼다 | 옮기지 않는다 |
 
 새로 쓰는 부분에는 이런 것을 만들어 넣지 않는다.
 
@@ -92,6 +93,11 @@ mcp__confluence-mcp__update_page(page_id=<ID>, title=<제목>,
 올린 뒤:
 - `get_page(convert_to_markdown=false)` 로 다시 읽어 제목·매크로 개수가 파일과 같은지
   본다. 위 표의 이미지·멘션 변환 때문에 글자 단위로는 같지 않다.
+- **다시 읽은 원문에 `<ac:macro ac:name="…">` 가 있으면 그 매크로는 설치돼 있지 않다.**
+  Confluence 는 설치된 매크로를 `ac:structured-macro` 로 두고 `ac:macro-id`·
+  `ac:schema-version` 을 붙이지만, 모르는 매크로는 `<ac:macro>` 로 바꾸고 plain-text
+  본문을 지운다. 렌더링을 보지 않고도 알 수 있는 유일한 신호다. 보이면 사용자에게 알리고,
+  파일에서 그 매크로를 빼 다시 올린다.
 - 페이지 URL 을 주고 **브라우저에서 한 번 봐 달라고** 한다. 렌더링은 MCP 로 확인할 수
   없다. PlantUML 이 있으면 특히.
 - 첨부가 필요한 이미지가 있으면 목록을 준다. MCP 로는 첨부를 올릴 수 없다.
