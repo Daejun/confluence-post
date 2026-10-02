@@ -73,23 +73,20 @@ stop
 ## storage format 형태
 
 ```xml
-<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+<p><ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
 Client -> MTFS: write(4K)
 MTFS --> Client: ack
-@enduml]]></ac:plain-text-body></ac:structured-macro>
+@enduml]]></ac:plain-text-body></ac:structured-macro></p>
 ```
 
 `<![CDATA[` 바로 뒤에 `@startuml` 이 붙는다. 들여쓰면 PlantUML 이 첫 줄을 못 읽는다.
 
-## 앞뒤 텍스트에 붙어 나올 때
+## 매크로는 `<p>` 로 감싼다
 
-**소스에 빈 줄이 있어도 매크로가 위아래 텍스트에 붙어 한 줄로 렌더링될 수 있다.**
-**[실측]** 2026-09-09, plantuml 매크로 31개를 넣은 문서에서 사용자가 "plantuml
-앞뒤로 줄바꿈이 왜 안되냐"고 보고했다. 소스에는 매크로 앞뒤로 빈 줄이 모두 있었고
-`</p>` 와 같은 줄에 붙은 곳도 없었다. 원인은 소스가 아니라 **Confluence 가 매크로를
-block 이 아니라 inline 으로 그리는 것**으로 보인다.
+**매크로를 최상위에 그냥 두면 소스에 빈 줄이 있어도 위아래 텍스트에 붙어 한 줄로
+렌더링된다.** `<p> ... </p>` 로 감싸면 한 줄을 차지한다.
 
-**후보 조치:** 매크로를 `<p> ... </p>` 로 감싼다. 31개 전부에 적용했으나
-**[미확인]** — 실제로 줄바꿈이 고쳐졌는지 사용자 확인을 받지 못했다. P8 probe 로
-확인하기 전에는 확정하지 않는다. `<p>` 감싸기는 매크로를 최상위에서 한 단계 안으로
-넣는 것이라, 확정 전에는 쓰지 않는다.
+**[실측]** 2026-09-09, plantuml 매크로 31개를 넣은 문서에서 "plantuml 앞뒤로 줄바꿈이
+왜 안되냐"는 보고가 있었다. 소스에는 매크로 앞뒤로 빈 줄이 모두 있었고 `</p>` 와 같은
+줄에 붙은 곳도 없었다 — 원인은 소스가 아니라 **Confluence 가 매크로를 block 이 아니라
+inline 으로 그리기 때문**이다. 매크로를 `<p>` 로 감싸 고쳤다.
