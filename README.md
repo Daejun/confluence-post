@@ -9,7 +9,7 @@ Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. �
 **1. 설치** — Claude Code 안에서 두 줄.
 
 ```
-/plugin marketplace add Daejun/confluence-post
+/plugin marketplace add https://github.samsungds.net/daejun7-park/confluence-post.git
 /plugin install confluence-post@confluence-post
 ```
 
@@ -85,7 +85,7 @@ zone 크기를 48M 으로 줄이면 rand-write IOPS 가 12% 오른다.
 Claude Code 안에서:
 
 ```
-/plugin marketplace add Daejun/confluence-post
+/plugin marketplace add https://github.samsungds.net/daejun7-park/confluence-post.git
 /plugin install confluence-post@confluence-post
 ```
 
@@ -98,7 +98,7 @@ Claude Code 안에서:
 직접 고치면서 쓸 거면 symlink 를 쓴다 — 저장소를 고치는 즉시 반영된다.
 
 ```bash
-git clone https://github.com/Daejun/confluence-post.git ~/confluence
+git clone https://github.samsungds.net/daejun7-park/confluence-post.git ~/confluence
 ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skills/confluence-post
 ```
 
