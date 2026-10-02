@@ -59,7 +59,7 @@ A7. 내 space key, 초안을 둘 부모 페이지
 | B5 | expand | 접힌 상태로 나옴 |
 | B6 | 저장 후 Edit Source 재확인 | 쓴 XHTML 그대로 유지 |
 
-이것으로 storage format 경로가 확정됐다. `skills/confluence-post/` 가 이 결과 위에 서 있다.
+이것으로 storage format 경로가 확정됐다. `plugins/confluence-post/skills/post/` 가 이 결과 위에 서 있다.
 
 ---
 

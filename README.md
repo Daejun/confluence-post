@@ -15,6 +15,7 @@ MCP 가 없거나 실패하면 그 파일을 페이지의 **Edit Source** 에 �
 ```
 
 **2. 부른다** — 스킬 이름은 외울 필요 없다. 파일을 주면 변환하고, 안 주면 새로 쓴다.
+직접 부르려면 `/confluence-post:post`.
 
 ```
 work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
@@ -101,7 +102,7 @@ Claude Code 안에서:
 
 ```bash
 git clone https://github.samsungds.net/daejun7-park/confluence-post.git ~/confluence
-ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skills/confluence-post
+ln -s ~/confluence/plugins/confluence-post/skills/post ~/.claude/skills/post
 ```
 
 **둘 중 하나만 쓴다.** 같이 쓰면 같은 스킬이 두 번 잡힌다.
@@ -222,7 +223,7 @@ PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTM
 스킬이 파일을 내기 전에 자동으로 돌린다. 직접 돌릴 수도 있다.
 
 ```bash
-python3 plugins/confluence-post/skills/confluence-post/scripts/check.py out/<slug>.xhtml
+python3 plugins/confluence-post/skills/post/scripts/check.py out/<slug>.xhtml
 ```
 
 ```
@@ -250,7 +251,7 @@ python3 .../scripts/check.py --probe probe/P1-languages.xhtml
 |---|---|
 | `.claude-plugin/marketplace.json` | 마켓플레이스 정의 |
 | `plugins/confluence-post/` | 플러그인. 스킬 하나를 담는다 |
-| `.../skills/confluence-post/SKILL.md` | 스킬 본체 |
+| `.../skills/post/SKILL.md` | 스킬 본체 |
 | `.../reference/storage-format.md` | markdown → storage format 매핑 |
 | `.../reference/plantuml.md` | PlantUML 문법 규칙과 쓰지 않는 것 |
 | `.../reference/existing-page.md` | MCP 로 기존 페이지 읽기, 옮기면 안 되는 자리, 게시 |

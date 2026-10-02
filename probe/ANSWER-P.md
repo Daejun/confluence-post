@@ -43,9 +43,9 @@ code 파라미터 3종, 링크 4종, 첨부 없는 이미지, blockquote·hr, �
 
 ## 이 결과가 스킬에 반영된 곳
 
-- `skills/confluence-post/SKILL.md` — 확정된 환경, 도식 정책
-- `skills/confluence-post/reference/storage-format.md` — 언어 목록, PlantUML
-- `skills/confluence-post/scripts/check.py` — CONFIRMED / UNAVAILABLE / TESTED_LANGS
+- `plugins/confluence-post/skills/post/SKILL.md` — 확정된 환경, 도식 정책
+- `plugins/confluence-post/skills/post/reference/storage-format.md` — 언어 목록, PlantUML
+- `plugins/confluence-post/skills/post/scripts/check.py` — CONFIRMED / UNAVAILABLE / TESTED_LANGS
 
 ---
 

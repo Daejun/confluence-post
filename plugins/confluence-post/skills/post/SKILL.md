@@ -1,5 +1,5 @@
 ---
-name: confluence-post
+name: post
 description: 사내 Confluence(Data Center)에 올릴 문서를 storage format(XHTML)으로 만든다. 기존 markdown을 변환하거나 처음부터 작성해 Edit Source에 그대로 넣을 조각 파일을 내고, Confluence MCP가 있으면 그 파일로 페이지를 만들거나 고친다. Use when the user asks to write or convert a document for 사내 컨플루언스/Confluence, says "컨플루언스에 올릴 것", "컨플루언스 문법으로 바꿔줘", or asks to prepare a page for Confluence DC.
 ---
 
@@ -129,9 +129,10 @@ A -> B: write
    현재 디렉터리에 쓸 수 없으면 scratchpad에 쓴다. 어느 쪽이든 **절대 경로로** 알린다.
 
 5. **검증한다.** 검사기는 이 SKILL.md 와 같은 디렉터리의 `scripts/check.py` 다.
-   설치 형태에 따라 절대 경로가 다르니 한 번 찾아서 쓴다.
+   스킬을 불러올 때 표시된 base directory 가 있으면 그 아래를 쓴다. 없으면 설치 형태에
+   따라 절대 경로가 다르니 한 번 찾아서 쓴다.
    ```bash
-   CHECK=$(find -L ~/.claude -path "*confluence-post/scripts/check.py" 2>/dev/null | head -1)
+   CHECK=$(find -L ~/.claude -path "*/skills/post/scripts/check.py" 2>/dev/null | head -1)
    python3 "$CHECK" out/<slug>.xhtml
    ```
    이어 붙일 페이지가 본문을 h1 부터 쓰면 `--h1` 을 준다(6단계에서 확인한 관례).
