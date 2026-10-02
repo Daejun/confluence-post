@@ -105,7 +105,9 @@ Confluence MCP 의 `create_page` 로 테스트 페이지를 만들고, `get_page
   P1 대조군 미확인이 풀렸다: 확인된 22종은 진짜로 칠해진 것이다.
 - **M07~M13** — excerpt, children, pagetree, include, details, section/column, chart 정상.
 - **S01~S05** — colspan, rowspan, thead, h6 정상. 체크박스는 보이지만 누르면 "저장할 수
-  없다" 오류. `task-id` 를 넣은 S04b 를 추가했다(결과 대기).
+  없다" 오류.
+- **S04b** — `<ac:task-id>` 를 넣은 체크박스는 눌러서 저장된다. markdown 체크박스를
+  이것으로 바꾼다.
 
 ## 이 결과가 반영된 곳
 

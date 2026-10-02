@@ -199,8 +199,9 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 저장하면 Confluence 가 `<ac:macro>` 로 바꾸고 본문을 지운다. check.py 가 ERROR로 막는다.
 
 **조건부** — `drawio` 는 설치돼 있으나 에디터에서 그려야 해 XHTML로 저작할 수 없다.
-`jira` 는 실제 이슈 키로만 렌더링된다. 체크박스(`ac:task-list`)는 보이지만 `task-id`
-없이 넣으면 클릭할 때 저장 오류가 나서, markdown 체크박스는 status 매크로로 바꾼다.
+`jira` 는 실제 이슈 키로만 렌더링된다. 체크박스(`ac:task-list`)는 `task-id` 를 넣으면
+눌러서 저장까지 되고, 없으면 누를 때 저장 오류가 난다. markdown 체크박스는 id 를 붙인
+네이티브 체크박스로 바꾼다.
 
 **구조** — 3단 중첩 목록, 8열 표(안 잘림), 표 셀 안 code·expand, 긴 코드 한 줄,
 링크 4종, 본문 이스케이프, h2~h6, `colspan`·`rowspan`·`<thead>` 전부 정상. Edit Source
@@ -220,7 +221,7 @@ PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTM
 ### 남은 미확인
 
 - Confluence 버전
-- `task-id` 를 넣은 체크박스가 클릭해 저장되는가
+- 중첩 체크박스, 체크박스 본문 안의 목록
 - PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다.
   `<p>` 로 감싸면 고쳐졌고, 감싸도 렌더링은 같아서 감싸 둔다
 

@@ -47,8 +47,9 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 - `drawio` — 설치돼 있다(미설치가 아니라 오류가 났다). 다만 다이어그램을 에디터에서
   그려야 하므로 XHTML로 저작할 수 없다. 스킬이 내지 않는다.
 - `jira` — 매크로는 있다. 실제 이슈 키로만 렌더링된다.
-- 체크박스(`<ac:task-list>`) — 보이기는 하지만 `ac:task-id` 없이 넣으면 클릭할 때
-  저장 오류가 난다. 쓰지 않는다. markdown 체크박스는 status 매크로로 바꾼다.
+- 체크박스(`<ac:task-list>`) — `ac:task-id` 를 넣으면 눌러서 저장까지 된다. 없으면
+  보이기만 하고 누를 때 저장 오류가 난다. markdown 체크박스는 이것으로 바꾼다.
+  `reference/storage-format.md` 의 체크박스 절.
 
 **매크로 설치 여부는 저장 후 다시 읽으면 안다.** 설치된 매크로는
 `ac:structured-macro` 로 남고 `ac:macro-id`·`ac:schema-version` 이 붙는다. 설치되지
@@ -89,7 +90,7 @@ A -> B: write
 ## 아직 확인 안 된 것
 
 - Confluence 버전
-- `ac:task-id` 를 넣은 체크박스는 클릭해 저장되는가
+- 중첩 체크박스, 체크박스 본문 안의 목록
 - PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다
 
 ## 순서

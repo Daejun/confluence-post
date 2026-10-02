@@ -64,22 +64,32 @@ Edit Source에서 사람이 고칠 수 있어야 하므로 들여쓰는 편이 �
 
 중첩 `<ul>`은 **부모 `<li>` 안에** 넣는다. 번호 목록은 `<ol>`.
 
-### 체크박스 — `status` 매크로를 앞에 붙인다
+### 체크박스 — `<ac:task-list>` — 확인됨
 
-네이티브 체크박스 `<ac:task-list>` 는 보이기는 하지만, `ac:task-id` 없이 넣으면 클릭할
-때 저장 오류가 난다 — 확인됨. 쓰지 않는다. 목록 구조는 그대로 두고 항목 앞에
-status 를 붙인다. **Green `완료` 와 Grey `대기` 두 가지만 쓴다** — 표기를 매번 새로
-정하지 않는다.
+markdown `- [x]` / `- [ ]` 목록은 네이티브 체크박스로 바꾼다. 화면에서 눌러 체크하고
+저장할 수 있다.
 
 ```xml
-<ul>
-<li><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">완료</ac:parameter></ac:structured-macro> zone 재선택 경로 수정</li>
-<li><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Grey</ac:parameter><ac:parameter ac:name="title">대기</ac:parameter></ac:structured-macro> xfstests 재확인</li>
-</ul>
+<ac:task-list>
+<ac:task><ac:task-id>1</ac:task-id><ac:task-status>complete</ac:task-status><ac:task-body>zone 재선택 경로 수정</ac:task-body></ac:task>
+<ac:task><ac:task-id>2</ac:task-id><ac:task-status>incomplete</ac:task-status><ac:task-body>xfstests 재확인</ac:task-body></ac:task>
+</ac:task-list>
 ```
 
-리터럴 `[x]` `[ ]` 를 그대로 남기지 않는다. 항목이 20개를 넘어 status 가 화면을 덮으면
-표(항목 / 상태) 로 바꾸고, 구조를 바꿨다는 것을 초안에 적는다.
+- **`<ac:task-id>` 를 반드시 넣는다.** 없으면 보이기는 하지만 누를 때 저장 오류가 난다.
+  페이지 전체에서 1 부터 겹치지 않게 매긴다 — 목록이 여럿이면 이어서 센다. 기존
+  페이지를 개정할 때는 그 페이지에서 쓰인 가장 큰 id 다음부터 쓴다. check.py 가 빠진
+  것과 겹친 것을 ERROR 로 막는다.
+- `[x]` → `complete`, `[ ]` → `incomplete`. 리터럴 `[x]` `[ ]` 를 남기지 않는다.
+- `<ac:task-body>` 안은 인라인만 둔다(글자, `<code>`, `<strong>`, 링크). 중첩 체크박스와
+  본문 안 목록은 확인하지 않았다 — 하위 항목은 평탄화하거나 바로 아래 일반 목록으로 뺀다.
+
+**체크박스와 일반 항목이 섞인 목록**, 그리고 **표 안의 상태 칸**은 status 매크로를
+쓴다. Green `완료` 와 Grey `대기` 두 가지만 쓴다 — 표기를 매번 새로 정하지 않는다.
+
+```xml
+<td><ac:structured-macro ac:name="status"><ac:parameter ac:name="colour">Green</ac:parameter><ac:parameter ac:name="title">완료</ac:parameter></ac:structured-macro></td>
+```
 
 ## 표 — 확인됨
 
@@ -239,6 +249,6 @@ markdown 에는 대응이 없어 변환할 때 새로 만들지는 않는다. �
   저장하면 `<ac:macro>` 로 바뀌고 본문이 지워진다.
 - `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
 - `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
-- 각주 — storage format에 대응이 없다. 본문으로 푼다. 체크박스는 위 `목록` 절을 본다.
+- 각주 — storage format에 대응이 없다. 본문으로 푼다.
 - `<style>` — 무시된다.
 - `<thead>`, `class` 속성 — 저장은 되지만 새로 쓰지 않는다. 위 `표` 절.

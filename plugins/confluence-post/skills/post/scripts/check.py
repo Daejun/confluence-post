@@ -252,7 +252,7 @@ def main(path):
         return
 
     parent = {c: p for p in root.iter() for c in p}
-    images = []
+    images, task_ids = [], []
     for el in root.iter():
         tag = el.tag
         if el is not root and "}" not in tag and tag not in ALLOWED_TAGS:
@@ -296,10 +296,13 @@ def main(path):
             else:
                 err(f"`<ac:macro ac:name=\"{name}\">` 는 설치되지 않은 매크로가 저장되며 "
                     f"바뀐 형태다. 본문은 이미 지워졌다 — 빼거나 원래 내용을 다시 쓴다")
-        if tag == f"{{{NS['ac']}}}task" and not probe_mode \
-                and el.find(f"{{{NS['ac']}}}task-id") is None:
-            err("<ac:task> 에 <ac:task-id> 가 없다. 체크박스를 누르면 저장 오류가 난다 — "
-                "status 매크로로 바꾼다")
+        if tag == f"{{{NS['ac']}}}task" and not probe_mode:
+            tid = el.find(f"{{{NS['ac']}}}task-id")
+            if tid is None:
+                err("<ac:task> 에 <ac:task-id> 가 없다. 체크박스를 누르면 저장 오류가 난다 — "
+                    "페이지 안에서 겹치지 않는 번호를 넣는다")
+            else:
+                task_ids.append((tid.text or "").strip())
         if tag in ("ul", "ol") and parent.get(el) is not None \
                 and parent[el].tag in ("ul", "ol"):
             err("중첩 목록이 <li> 밖에 있다. 부모 <li> 안으로 넣는다")
@@ -311,6 +314,9 @@ def main(path):
 
     if root.text and root.text.strip():
         warn("최상위에 <p> 밖 맨 텍스트가 있다")
+    dup = sorted({t for t in task_ids if task_ids.count(t) > 1})
+    if dup:
+        err(f"<ac:task-id> 가 겹친다: {', '.join(dup)}. 페이지 전체에서 겹치지 않게 매긴다")
     if images:
         print("첨부 필요: " + ", ".join(sorted(set(images))))
     report()
