@@ -176,8 +176,9 @@ A -> B: write
   check.py가 ERROR로 걸러낸다.
 - **PlantUML 소스에 `]]>` 가 들어가지 않게 한다.** CDATA가 거기서 끊긴다.
 - **PlantUML 매크로는 `<p> ... </p>` 로 감싼다.** 감싸지 않으면 소스에 빈 줄이
-  있어도 위아래 텍스트에 붙어 한 줄로 나온다 — Confluence 가 매크로를 inline 으로
-  그리기 때문이다. `reference/plantuml.md` 참조.
+  있어도 위아래 텍스트에 붙어 한 줄로 나온다 — PlantUML 매크로가 inline 으로
+  그려지기 때문이다. **PlantUML 만** 감싼다. code·expand·info 는 감싸지 않는다.
+  `reference/plantuml.md` 참조.
 - **CDATA 안을 들여쓰지 않는다.** 요소 사이 들여쓰기는 렌더링에 영향이 없지만,
   CDATA 안의 공백은 코드 내용 그 자체다. `<![CDATA[` 바로 뒤부터 내용을 시작하고
   `]]>` 는 마지막 줄 끝에 붙인다. 코드 자체의 들여쓰기(커널이면 탭)는 그대로 살린다.

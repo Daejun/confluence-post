@@ -267,6 +267,9 @@ def main(path):
             if name == "plantuml":
                 b = el.find(f"{{{NS['ac']}}}plain-text-body")
                 check_plantuml(b.text or "" if b is not None else "")
+                if parent[el].tag != "p" and not probe_mode:
+                    warn("plantuml 매크로가 <p> 밖에 있다. inline 으로 그려져 위아래 "
+                         "텍스트에 붙는다 — <p> 로 감싼다")
             if name == "code":
                 lang = el.find(f"{{{NS['ac']}}}parameter[@{{{NS['ac']}}}name='language']")
                 if lang is not None and (lang.text or "") not in TESTED_LANGS:

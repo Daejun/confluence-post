@@ -176,10 +176,14 @@ URL 안의 `&`도 `&amp;`로 바꿔야 한다.
 ## 도식 — PlantUML (설치 확인됨)
 
 ```xml
-<ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
+<p><ac:structured-macro ac:name="plantuml"><ac:plain-text-body><![CDATA[@startuml
 A -> B: write
-@enduml]]></ac:plain-text-body></ac:structured-macro>
+@enduml]]></ac:plain-text-body></ac:structured-macro></p>
 ```
+
+**`<p>` 로 감싼다.** 최상위에 그냥 두면 위아래 텍스트에 붙어 나온다. 감싸는 것은
+PlantUML 만이다 — code·expand·info 같은 매크로는 위 절의 형태 그대로 둔다.
+자세한 건 `reference/plantuml.md`.
 
 소스가 평문이라 XHTML에 그대로 담긴다. 다만 **기본은 도식 없음**이고,
 사용자가 도식을 요구했을 때만 낸다.
