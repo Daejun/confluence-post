@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Confluence DC storage format 조각 검사기.
 
-사내 Confluence의 Edit Source에 넣기 전에 돌린다.
+사내 Confluence에 넣기 전에 돌린다 (Edit Source 붙여넣기든 MCP 게시든).
 ERROR가 하나라도 있으면 넣지 않는다. 종료 코드 1.
 """
 import html.entities
@@ -282,6 +282,9 @@ def main(path):
             err("중첩 목록이 <li> 밖에 있다. 부모 <li> 안으로 넣는다")
         if tag == f"{{{NS['ri']}}}attachment":
             images.append(el.get(f"{{{NS['ri']}}}filename", "?"))
+        if tag == "img" and "/download/attachments/" in el.get("src", ""):
+            err(f"<img src=\"{el.get('src')[:60]}…\"> 는 MCP 가 첨부 이미지를 바꿔 보여준 "
+                f"형태다. <ac:image><ri:attachment ri:filename=\"…\"/></ac:image> 로 되돌린다")
 
     if root.text and root.text.strip():
         warn("최상위에 <p> 밖 맨 텍스트가 있다")
@@ -296,7 +299,7 @@ def report():
     for m in errors:
         print("ERROR " + m)
     if errors:
-        print(f"\n{len(errors)}건 — 고치기 전에는 Edit Source에 넣지 않는다")
+        print(f"\n{len(errors)}건 — 고치기 전에는 Confluence에 넣지 않는다")
         sys.exit(1)
     print("\nOK" + (f" (WARN {len(warns)}건)" if warns else ""))
 

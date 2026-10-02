@@ -1,13 +1,15 @@
 ---
 name: confluence-post
-description: 사내 Confluence(Data Center)에 올릴 문서를 storage format(XHTML)으로 만든다. 기존 markdown을 변환하거나 처음부터 작성해 Edit Source에 그대로 넣을 조각 파일을 낸다. Use when the user asks to write or convert a document for 사내 컨플루언스/Confluence, says "컨플루언스에 올릴 것", "컨플루언스 문법으로 바꿔줘", or asks to prepare a page for Confluence DC.
+description: 사내 Confluence(Data Center)에 올릴 문서를 storage format(XHTML)으로 만든다. 기존 markdown을 변환하거나 처음부터 작성해 Edit Source에 그대로 넣을 조각 파일을 내고, Confluence MCP가 있으면 그 파일로 페이지를 만들거나 고친다. Use when the user asks to write or convert a document for 사내 컨플루언스/Confluence, says "컨플루언스에 올릴 것", "컨플루언스 문법으로 바꿔줘", or asks to prepare a page for Confluence DC.
 ---
 
 # 사내 Confluence 게시물 만들기
 
-산출물은 **storage format(XHTML) 조각 파일** 하나다. 사용자가 그것을 사내 Confluence의
-**Edit Source**에 넣는다. wiki markup(`h1.`, `{code}`)과 markdown insert는 쓰지 않는다 —
-Edit Source가 있어 둘 다 우회하고, 그 두 경로에만 있는 파서 함정을 피한다.
+산출물은 **storage format(XHTML) 조각 파일** 하나다. Confluence MCP
+(`mcp__confluence-mcp__*`)가 있으면 그 파일 그대로 페이지를 만들거나 고친다 —
+**best effort** 다. MCP 가 없거나 실패하면 사용자가 파일을 **Edit Source**에 넣는다.
+어느 쪽이든 파일이 먼저다. wiki markup(`h1.`, `{code}`)과 markdown insert는 쓰지 않는다 —
+storage format 을 직접 넣어 둘 다 우회하고, 그 두 경로에만 있는 파서 함정을 피한다.
 
 조각이므로 `<!DOCTYPE>`, `<html>`, `<body>`를 쓰지 않는다. 최상위는 `<p>`, `<h2>`,
 `<table>`, `<ac:structured-macro>` 같은 요소들이 나열된 형태다.
@@ -71,7 +73,8 @@ A -> B: write
 ## 순서
 
 1. **입력을 정한다.** 변환할 markdown 파일 경로가 있으면 읽는다. 없으면 새로 쓴다.
-   어느 쪽인지 한 줄로 밝히고 시작한다.
+   어느 쪽인지 한 줄로 밝히고 시작한다. 고칠 페이지나 올릴 부모 페이지의 URL 을
+   받았으면 그것도 적어 둔다 — 6단계에서 읽고 9단계에서 올린다.
 
 2. **문서 유형을 정하고 그 기준으로 줄인다.** 전역 CLAUDE.md의 "게시물" 규칙이
    적용되지만, 유형에 따라 근거로 볼 것이 갈린다.
@@ -126,10 +129,13 @@ A -> B: write
      언어가 원문과 같은가. 원문에서 코드였던 것이 문단으로, 표였던 것이 목록으로
      뭉개지지 않았는가.
    - **이어 붙일 페이지가 있으면 그 페이지의 관례를 따른다.** 개정이거나 기존 페이지에
-     덧붙이는 것이면 그 페이지의 Edit Source 를 먼저 본다. 제목을 h2 부터 쓰는지 h3
-     부터 쓰는지, 절 이름, toc 사용 여부, code 매크로 파라미터(`title` `linenumbers`
-     `collapse`) 관례를 그대로 쓴다. 내 형식을 새로 만들지 않는다.
-     **그 페이지를 못 구했으면 사용자에게 한 번 요청한다.** 그래도 없으면 기본
+     덧붙이는 것이면 그 페이지의 storage 원문을 먼저 본다. MCP 가 있으면
+     `get_page(convert_to_markdown=false)` 로 읽는다 — 읽는 법, 그대로 옮기면 안 되는
+     자리, 에디터가 남긴 흔적의 처리는 `reference/existing-page.md` 를 읽는다.
+     제목을 h2 부터 쓰는지 h3 부터 쓰는지, 절 이름, toc 사용 여부, code 매크로
+     파라미터(`title` `linenumbers` `collapse`) 관례를 그대로 쓴다. 내 형식을 새로
+     만들지 않는다.
+     **MCP 로 못 읽었으면 사용자에게 Edit Source 내용을 한 번 요청한다.** 그래도 없으면 기본
      관례(본문 h2 시작, toc 없음, code 파라미터는 language 만)로 쓰고, 초안 첫 줄에
      "기존 페이지 관례를 대조하지 못했다"고 적는다. 혼자 절충안을 만들지 않는다.
 
@@ -148,17 +154,23 @@ A -> B: write
 
 8. **초안을 보여주고 승인을 받는다.** 렌더링될 내용을 읽기 좋은 형태로 보여준다
    (XHTML 원문을 통째로 화면에 쏟지 않는다). 수정 요청을 받으면 변호하지 말고 고친 초안을
-   다시 보여준다.
+   다시 보여준다. MCP 로 올릴 거면 **올릴 곳**(새 페이지의 부모와 제목, 또는 고칠 페이지)도
+   같이 보여주고 승인받는다. 모르면 여기서 한 번 묻는다.
 
-9. **전달한다. 여기까지가 이 스킬의 끝이다** — 산출물은 XHTML 파일 한 장이고,
-   Confluence 에 넣는 것은 사용자가 한다.
+9. **전달한다. 여기까지가 이 스킬의 끝이다.**
 
-   **넣는 방법을 이 문장 그대로 적는다.** `<파일명>` 자리에 실제 산출물 이름을 넣는다.
+   **MCP 가 있고 올릴 곳을 승인받았으면 올린다.** 파일 내용을 그대로 `create_page` /
+   `update_page(content_format="storage")` 에 넣는다. 절차와 올린 뒤 확인할 것은
+   `reference/existing-page.md` 의 "게시" 절. 성공하면 페이지 URL 을 주고 브라우저에서
+   한 번 봐 달라고 한다 — 렌더링은 MCP 로 확인할 수 없다.
+
+   **MCP 가 없거나, 올릴 곳이 없거나, 실패했으면** 실패한 이유를 한 줄로 적고 붙여넣기로
+   넘어간다. 넣는 방법을 이 문장 그대로 적는다. `<파일명>` 자리에 실제 산출물 이름을 넣는다.
 
    > 페이지 작성 화면에서 오른쪽 위의 `< >` 를 눌러 `<파일명>` 출력물을 넣어주세요.
 
-   그 다음 줄에 파일 경로와 **줄 수·문자 수**를 적는다. 분량이 곧 옮기는 비용이다.
-   길면 어디서 끊어 나눠 넣을지 같이 알려준다.
+   어느 쪽이든 그 다음 줄에 파일 경로와 **줄 수·문자 수**를 적는다. 붙여넣기라면 분량이
+   곧 옮기는 비용이다. 길면 어디서 끊어 나눠 넣을지 같이 알려준다.
 
 ## 가장 틀리기 쉬운 자리
 

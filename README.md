@@ -1,8 +1,9 @@
 # confluence-post
 
 사내 Confluence Data Center에 올릴 문서를 **storage format(XHTML)** 으로 만들어 주는
-Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. 나온 파일 한 장을
-페이지의 **Edit Source** 에 붙여넣으면 끝이다.
+Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. 결과는 파일 한 장으로
+저장하고, **Confluence MCP** 가 연결돼 있으면 그 파일로 페이지까지 올린다(best effort).
+MCP 가 없거나 실패하면 그 파일을 페이지의 **Edit Source** 에 붙여넣으면 끝이다.
 
 ## 빠른 시작
 
@@ -19,9 +20,10 @@ Claude Code 스킬. markdown을 주면 변환하고, 없으면 새로 쓴다. �
 work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
 ```
 
-**3. 넣는다** — 초안을 승인하면 `out/<slug>.xhtml` 이 나온다. Confluence 페이지 편집
-화면 오른쪽 위 `< >` (소스 편집) 를 눌러 그 파일 내용을 **전체** 붙여넣고 저장한다.
-일반 편집 화면에 붙이면 태그가 글자로 보이니 반드시 `< >` 안에 넣는다.
+**3. 올린다** — 초안을 승인하면 `out/<slug>.xhtml` 이 나온다. Confluence MCP 가 있으면
+승인한 곳(새 페이지의 부모, 또는 고칠 페이지)에 스킬이 바로 올린다. 없거나 실패하면
+페이지 편집 화면 오른쪽 위 `< >` (소스 편집) 를 눌러 그 파일 내용을 **전체** 붙여넣고
+저장한다. 일반 편집 화면에 붙이면 태그가 글자로 보이니 반드시 `< >` 안에 넣는다.
 
 자세한 것은 아래 [쓰는 법](#쓰는-법), 설치 옵션은 [설치](#설치).
 
@@ -109,6 +111,8 @@ ln -s ~/confluence/plugins/confluence-post/skills/confluence-post ~/.claude/skil
 - Confluence **Data Center**. Cloud는 storage format이 달라 대상이 아니다.
 - 페이지의 **Edit Source**(소스 편집) 권한. 읽기 전용 계정이면 못 쓴다.
 - `check.py` 실행에 python3. 표준 라이브러리만 쓴다. 다른 의존성은 없다.
+- 선택: 사내 **Confluence MCP**(`mcp__confluence-mcp__*`). 있으면 고칠 페이지를 읽어
+  관례를 맞추고 결과를 직접 올린다. 없어도 파일까지는 똑같이 나온다.
 
 ## 쓰는 법
 
@@ -131,16 +135,25 @@ work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
 그대로 가고, 애매할 때만 한 번 묻는다. 조사·설계 노트는 기각한 가설과 경위를 근거로
 보고 남기고, 주간보고·PR 요약은 뺀다.
 
+기존 페이지를 고치거나 그 아래에 새로 쓸 거면 페이지 URL 을 같이 준다. MCP 로 그
+페이지를 읽어 제목 단계·toc·code 파라미터 관례를 맞춘다.
+
 ### 2. 초안을 확인한다
 
 XHTML 원문을 쏟아내지 않고, 렌더링될 내용을 읽기 좋은 형태로 보여준다. 고칠 곳을
-말하면 고친 초안을 다시 보여준다. 승인 전에는 파일을 넘기지 않는다.
+말하면 고친 초안을 다시 보여준다. 승인 전에는 파일을 넘기지도, 페이지에 올리지도 않는다.
+MCP 로 올릴 거면 올릴 곳도 이때 같이 승인한다.
 
 이때 함께 확인하는 것: code 매크로의 `title` 에 적힌 파일을 실제로 열어 대조했는지,
 표의 수치가 측정 출력에서 복사한 것인지와 조건이 적혀 있는지, PR·이슈·커밋 번호를
 `gh` 출력에서 가져왔는지. 대조하지 못한 것이 있으면 초안에 그렇게 적는다.
 
 ### 3. 검사를 통과한 파일을 받는다
+
+MCP 로 올렸으면 페이지 URL 이 같이 온다. 렌더링은 MCP 로 확인할 수 없으니 브라우저에서
+한 번 본다. 이미지 첨부는 MCP 로 못 올리므로 첨부할 목록이 있으면 직접 올린다.
+
+MCP 가 없거나 실패했으면 이렇게 받는다.
 
 ```
 out/mtfs-zone-bench.xhtml: 142줄, 6,318자
@@ -151,7 +164,7 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 줄 수·문자 수를 같이 주는 이유는 그게 곧 옮기는 비용이라서다. 길면 어디서 끊어
 나눠 넣을지도 알려준다.
 
-### 4. Confluence에 넣는다
+### 4. Confluence에 넣는다 (붙여넣기)
 
 1. 페이지를 만들거나 편집 화면을 연다
 2. 오른쪽 위 `< >` (소스 편집 / Edit Source) 를 누른다
@@ -215,8 +228,9 @@ OK
 
 잡아내는 것: 이스케이프 안 된 `&` 와 `<`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
 `<thead>`·`<html>`·DOCTYPE, `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
-미확인 code 언어, 제목 단계, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
-그 파일은 Edit Source에 넣지 않는다.
+미확인 code 언어, 제목 단계, `<p>` 밖의 PlantUML, MCP 조회 결과에서 그대로 옮긴
+첨부 이미지, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
+그 파일은 붙여넣지도 MCP 로 올리지도 않는다.
 
 `--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
 
@@ -233,6 +247,7 @@ python3 .../scripts/check.py --probe probe/P1-languages.xhtml
 | `.../skills/confluence-post/SKILL.md` | 스킬 본체 |
 | `.../reference/storage-format.md` | markdown → storage format 매핑 |
 | `.../reference/plantuml.md` | PlantUML 문법 규칙과 쓰지 않는 것 |
+| `.../reference/existing-page.md` | MCP 로 기존 페이지 읽기, 옮기면 안 되는 자리, 게시 |
 | `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
 | `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
 | `probe/ANSWER.md` | 1차 실측 응답표 |
