@@ -115,7 +115,9 @@ ln -s ~/confluence/plugins/confluence-post/skills/post ~/.claude/skills/post
 - 페이지의 **Edit Source**(소스 편집) 권한. 읽기 전용 계정이면 못 쓴다.
 - `check.py` 실행에 python3. 표준 라이브러리만 쓴다. 다른 의존성은 없다.
 - 선택: 사내 **Confluence MCP**(`mcp__confluence-mcp__*`). 있으면 고칠 페이지를 읽어
-  관례를 맞추고 결과를 직접 올린다. 없어도 파일까지는 똑같이 나온다.
+  관례를 맞추고 결과를 직접 올린다. 없어도 파일까지는 똑같이 나온다. 사내 REST 정책상
+  MCP 호출은 **분당 15회**로 제한되고 반복 호출은 계정 비활성화 대상이라, 스킬은 한 번에
+  몇 번만 부르고 실패해도 재시도 루프를 돌지 않는다.
 
 ## 쓰는 법
 
@@ -192,8 +194,13 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 
 **쓸 수 있는 매크로** — `code` `expand` `info` `note` `warning` `tip` `panel`
 `toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
-`recently-updated` `excerpt` `children` `pagetree` `include` `details` `section`
-`column` `chart`
+`excerpt` `children` `pagetree` `include` `details` `section` `column` `chart`
+
+**새로 넣지 않는 매크로** — 조회형(`recently-updated` `contentbylabel`
+`tasks-report-macro` `detailssummary` `livesearch` `report-*` 등)은 페이지를 열 때마다
+서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가 열리지 않았다. 커스텀
+매크로(ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·html 등)는 설치는 돼 있지만
+렌더링을 확인하지 않았다. 둘 다 기존 페이지에 있던 것만 그대로 옮긴다.
 
 **쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`.
 저장하면 Confluence 가 `<ac:macro>` 로 바꾸고 본문을 지운다. check.py 가 ERROR로 막는다.
@@ -220,7 +227,7 @@ PlantUML을 쓸 수 있다 (사내 서버 1.2024.8). 소스가 평문이라 XHTM
 
 ### 남은 미확인
 
-- Confluence 버전
+- Confluence 버전 — 사내 REST 정책 문서가 8.9.3 문서를 가리키지만 실제 버전은 적혀 있지 않다
 - 중첩 체크박스, 체크박스 본문 안의 목록
 - PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다.
   `<p>` 로 감싸면 고쳐졌고, 감싸도 렌더링은 같아서 감싸 둔다

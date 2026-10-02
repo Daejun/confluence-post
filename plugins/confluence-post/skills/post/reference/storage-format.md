@@ -242,11 +242,26 @@ markdown 에는 대응이 없어 변환할 때 새로 만들지는 않는다. �
 `ri:content-title` 은 같은 space 의 페이지 제목과 글자 그대로 같아야 한다. MCP 가
 있으면 CQL `title = "…" and space = "…"` 로 있는지 확인한다.
 
+사내 매뉴얼이 정한 쓰는 법:
+- **excerpt 는 페이지에 하나만.** 둘 이상이면 끌어 쓰는 쪽에서 첫 번째만 인식한다.
+- **column 은 반드시 section 안에.** check.py 가 ERROR 로 막는다.
+- children 은 `page` 를 빼면 이 페이지의 하위를 보여 준다. pagetree 는 깊이만 제한할 수
+  있고 개수는 못 막는다 — 하위가 많은 페이지를 root 로 잡지 않는다.
+
 ## 쓰지 않는 것
 
 - ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장, 또는 PlantUML로 바꾼다.
 - `mermaid` `mermaid-cloud` `mathblock` `gliffy` — 렌더링되지 않는 것을 확인했다.
   저장하면 `<ac:macro>` 로 바뀌고 본문이 지워진다.
+- **조회형 매크로** — `recently-updated` `contentbylabel` `tasks-report-macro`
+  `detailssummary` `livesearch` `blog-posts` `page-index` `index` `content-reporter`
+  `report-table` 등. 페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험
+  페이지가 열리지 않았다. 새로 넣지 않고, 기존 페이지에 있던 것만 그대로 둔다.
+  check.py 가 WARN 으로 알린다.
+- `html` — 설치돼 있으나 쓰지 않는다. 사내 매뉴얼이 외부 리소스와 과한 CSS 를 비권장하고,
+  사이드바에는 절대 넣지 말라고 한다. 기존 페이지에 있던 것은 그대로 둔다.
+- 커스텀 매크로(ui-tabs·ui-expand·divbox·multiexcerpt·table-filter 등) — 설치는 돼 있지만
+  렌더링과 파라미터를 확인하지 않았다. 새로 넣지 않고, 기존 페이지에 있던 것만 옮긴다.
 - `drawio` — 설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다.
 - `jira` — 실제 이슈 키가 있을 때만. 없는 키는 오류가 난다.
 - 각주 — storage format에 대응이 없다. 본문으로 푼다.

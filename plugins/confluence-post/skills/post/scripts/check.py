@@ -12,17 +12,52 @@ import xml.etree.ElementTree as ET
 # probe(2026-08-28, 2026-10-02)로 렌더링을 직접 확인한 매크로. 그대로 써도 된다.
 CONFIRMED = {"code", "expand", "info", "note", "warning", "tip", "panel",
              "toc", "status", "noformat", "anchor", "plantuml", "latex",
-             "attachments", "recently-updated", "excerpt", "children",
+             "attachments", "excerpt", "children",
              "pagetree", "include", "details", "section", "column", "chart"}
 # 설치돼 있지만 조건이 붙는 것
 CONDITIONAL = {
     "jira": "실제 이슈 키로만 렌더링된다. 없는 키는 오류가 난다",
     "drawio": "설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다",
+    "html": "설치돼 있으나 쓰지 않는다. 사내 매뉴얼이 외부 리소스·과한 CSS 를 비권장한다. "
+            "기존 페이지에 있던 것만 둔다",
 }
+# 조회형. 페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가
+# 열리지 않았다(P6). 기존 페이지에 있던 것을 옮기는 것만 막지 않는다.
+QUERY = {"recently-updated", "contentbylabel", "tasks-report-macro", "detailssummary",
+         "livesearch", "blog-posts", "page-index", "index", "popular-labels",
+         "listlabels", "content-reporter", "report-table", "report-column",
+         "report-info", "report-empty"}
+# probe 대상은 아니지만 사내 기존 페이지에서 렌더링되는 것을 확인한 플러그인 매크로.
+# 기존 페이지를 개정하려면 그대로 옮겨야 하므로 막지 않되, 근거가 probe가 아님을 밝힌다.
+# P6(2026-10-02)에서 저장 후 다시 읽어 설치(등록)된 것을 확인한 매크로도 여기 둔다 —
+# 렌더링과 파라미터는 확인하지 않았다.
+IN_USE = {
+    "table-filter": "Table Filter 플러그인",
+    "report-table": "Reporting 플러그인",
+    "report-column": "Reporting 플러그인",
+    "report-info": "Reporting 플러그인",
+    "report-empty": "Reporting 플러그인",
+    "content-reporter": "Reporting 플러그인",
+    "date-sort": "Reporting 플러그인",
+    "contributors-summary": "Contributors 플러그인",
+    "table-chart": "Table Filter 플러그인", "pivot-table": "Table Filter 플러그인",
+    "ui-tabs": "Refined Toolkit", "ui-tab": "Refined Toolkit",
+    "ui-expand": "Refined Toolkit", "ui-button": "Refined Toolkit",
+    "divbox": "설치 확인", "horizontal-nav-group": "설치 확인",
+    "horizontal-nav-item": "설치 확인", "tabs-group": "설치 확인",
+    "tab-pane": "설치 확인",
+    "multiexcerpt": "Multiexcerpt 플러그인", "multiexcerpt-include": "Multiexcerpt 플러그인",
+    "excerpt-include": "기본 매크로", "change-history": "기본 매크로",
+    "version-history": "설치 확인", "roadmap": "기본 매크로", "widget": "기본 매크로",
+    "multimedia": "기본 매크로", "view-file": "기본 매크로", "viewpdf": "기본 매크로",
+    "profile": "기본 매크로",
+}
+# 첨부를 반드시 가리켜야 하는 매크로. 없으면 페이지 저장이 서버 오류로 통째로 실패한다(P6)
+NEEDS_ATTACHMENT = {"multimedia", "view-file", "viewpdf"}
 # 렌더링이 안 되는 것을 probe로 확인했다. 저장하면 <ac:macro> 로 바뀌고 본문이 지워진다
 UNAVAILABLE = {
     "mermaid": "미설치", "mermaid-cloud": "미설치", "mathblock": "미설치",
-    "gliffy": "미설치",
+    "gliffy": "미설치", "lucidchart": "미설치", "iframe": "미설치",
 }
 # 사내 PlantUML 서버 버전. reference/plantuml.md 참조.
 PLANTUML_VERSION = "1.2024.8"
@@ -252,7 +287,7 @@ def main(path):
         return
 
     parent = {c: p for p in root.iter() for c in p}
-    images, task_ids = [], []
+    images, task_ids, excerpts = [], [], 0
     for el in root.iter():
         tag = el.tag
         if el is not root and "}" not in tag and tag not in ALLOWED_TAGS:
@@ -264,6 +299,12 @@ def main(path):
                 pass
             elif name in CONDITIONAL:
                 warn(f"매크로 `{name}`: {CONDITIONAL[name]}")
+            elif name in QUERY:
+                warn(f"매크로 `{name}`: 조회형이다. 페이지를 열 때마다 서버에서 검색을 "
+                     f"돌린다 — 새로 넣지 않는다. 기존 페이지에 있던 것만 둔다")
+            elif name in IN_USE:
+                warn(f"매크로 `{name}`: {IN_USE[name]} — 기존 페이지에서 확인, "
+                     f"probe 대상은 아니다. 새로 넣지 않는다")
             elif name in UNAVAILABLE and not probe_mode:
                 err(f"매크로 `{name}`: {UNAVAILABLE[name]} (probe로 확인). 쓰지 않는다")
             elif probe_mode:
@@ -286,11 +327,25 @@ def main(path):
                          f"확실치 않으면 text")
             if name in ("code", "noformat"):
                 check_cdata_head(el, name)
+            if name == "excerpt":
+                excerpts += 1
+            if name == "column":
+                body = parent.get(el)
+                owner = parent.get(body) if body is not None else None
+                if owner is None or owner.get(f"{{{NS['ac']}}}name") != "section":
+                    err("column 매크로가 section 밖에 있다. 사내 매뉴얼: column 은 항상 "
+                        "section 안에 둔다")
+            if name in NEEDS_ATTACHMENT and el.find(f".//{{{NS['ri']}}}attachment") is None:
+                err(f"매크로 `{name}` 이 첨부를 가리키지 않는다. 이대로 올리면 페이지 저장이 "
+                    f"서버 오류로 실패한다")
+            if name == "profile" and el.find(f".//{{{NS['ri']}}}user") is None:
+                err("profile 매크로에 사용자가 없다. 저장하면 매크로가 "
+                    "`[User Profile Macro (Malformed)]` 글자로 바뀐다")
         if tag == f"{{{NS['ac']}}}macro":
             # 저장할 때 Confluence 는 모르는 매크로를 이 옛 형식으로 바꾸고 본문을 지운다.
             # 이름이 아는 매크로면 오래된 페이지에 남은 옛 형식일 수 있다.
             name = el.get(f"{{{NS['ac']}}}name", "")
-            if name in CONFIRMED or name in CONDITIONAL:
+            if name in CONFIRMED or name in CONDITIONAL or name in QUERY or name in IN_USE:
                 warn(f"`<ac:macro ac:name=\"{name}\">` 는 옛 형식이다. "
                      f"<ac:structured-macro> 로 쓴다")
             else:
@@ -314,6 +369,9 @@ def main(path):
 
     if root.text and root.text.strip():
         warn("최상위에 <p> 밖 맨 텍스트가 있다")
+    if excerpts > 1:
+        warn(f"excerpt 매크로가 {excerpts}개다. 사내 매뉴얼: 페이지에 하나만 — 끌어 쓰는 "
+             f"쪽은 첫 번째만 인식한다")
     dup = sorted({t for t in task_ids if task_ids.count(t) > 1})
     if dup:
         err(f"<ac:task-id> 가 겹친다: {', '.join(dup)}. 페이지 전체에서 겹치지 않게 매긴다")

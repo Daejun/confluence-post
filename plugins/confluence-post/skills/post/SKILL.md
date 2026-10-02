@@ -36,8 +36,17 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 
 **쓸 수 있는 매크로**
 `code` `expand` `info` `note` `warning` `tip` `panel` `toc` `status`
-`noformat` `anchor` `plantuml` `latex` `attachments` `recently-updated`
+`noformat` `anchor` `plantuml` `latex` `attachments`
 `excerpt` `children` `pagetree` `include` `details` `section` `column` `chart`
+
+**조회형 매크로는 새로 넣지 않는다** — `recently-updated` `contentbylabel`
+`tasks-report-macro` `detailssummary` `livesearch` `content-reporter` `report-table` 등은
+페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가 열리지
+않았다. 기존 페이지에 있던 것만 그대로 둔다(check.py WARN).
+
+**커스텀 매크로도 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·
+html 등 설치는 돼 있지만 렌더링과 파라미터를 확인하지 않았다. 기존 페이지에 있던 것만
+옮긴다. 확인되지 않은 매크로를 서버에 넣어 시험하지 않는다.
 
 **쓸 수 없는 매크로 (렌더링 안 되는 것을 확인)**
 `mermaid` `mermaid-cloud` `mathblock` `gliffy`. 넣고 저장하면 Confluence 가
@@ -89,7 +98,7 @@ A -> B: write
 
 ## 아직 확인 안 된 것
 
-- Confluence 버전
+- Confluence 버전 — 사내 REST 정책 문서가 8.9.3 문서를 가리키지만 실제 버전은 적혀 있지 않다
 - 중첩 체크박스, 체크박스 본문 안의 목록
 - PlantUML 이 위아래 텍스트에 붙어 나온 보고의 원인 — probe 로는 재현되지 않았다
 
@@ -161,9 +170,12 @@ A -> B: write
      제목을 h2 부터 쓰는지 h3 부터 쓰는지, 절 이름, toc 사용 여부, code 매크로
      파라미터(`title` `linenumbers` `collapse`) 관례를 그대로 쓴다. 내 형식을 새로
      만들지 않는다.
-     **MCP 로 못 읽었으면 사용자에게 Edit Source 내용을 한 번 요청한다.** 그래도 없으면 기본
-     관례(본문 h2 시작, toc 없음, code 파라미터는 language 만)로 쓰고, 초안 첫 줄에
-     "기존 페이지 관례를 대조하지 못했다"고 적는다. 혼자 절충안을 만들지 않는다.
+     **MCP 가 없어서 못 읽었으면 사용자에게 Edit Source 내용을 한 번 요청한다.** 접근
+     제한(`confluence_access_forbidden`)으로 못 읽었으면 요청하지 않는다 — 극비·국핵일 수
+     있고, 그 내용을 외부 LLM 에 넘기는 것은 사내 보안 정책상 금지다. 어느 쪽이든 못
+     구했으면 기본 관례(본문 h2 시작, toc 없음, code 파라미터는 language 만)로 쓰고, 초안
+     첫 줄에 "기존 페이지 관례를 대조하지 못했다"고 적는다. 혼자 절충안을 만들지 않는다.
+     MCP 호출은 분당 15회 제한이 있다 — 호출 수와 재시도 규칙은 `reference/existing-page.md`.
 
 7. **매크로 안의 내용을 검토한다.** check.py 는 문법만 본다. XHTML 이 맞아도 안의
    내용은 틀릴 수 있고, 그건 사람이 읽어야 잡힌다. 아래를 하나씩 확인한다.
