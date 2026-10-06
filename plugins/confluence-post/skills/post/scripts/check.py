@@ -21,12 +21,28 @@ CONDITIONAL = {
     "html": "설치돼 있으나 쓰지 않는다. 사내 매뉴얼이 외부 리소스·과한 CSS 를 비권장한다. "
             "기존 페이지에 있던 것만 둔다",
 }
-# 조회형. 페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가
-# 열리지 않았다(P6). 기존 페이지에 있던 것을 옮기는 것만 막지 않는다.
-QUERY = {"recently-updated", "contentbylabel", "tasks-report-macro", "detailssummary",
-         "livesearch", "blog-posts", "page-index", "index", "popular-labels",
-         "listlabels", "content-reporter", "report-table", "report-column",
-         "report-info", "report-empty"}
+# 조회형. 페이지를 볼 때마다 검색을 돌린다. 범위를 정하지 않으면 기본값을 따르는데,
+# 매크로마다 달라 인스턴스 전체가 될 수 있다.
+# 범위 없이 여럿 넣은 시험 페이지(P6)가 열리지 않았다 — 원인을 따로 떼어 확인하지는 않았다.
+# 사용자가 요청했을 때만, 아래 파라미터 중 하나로 범위를 줘서 쓴다. 파라미터 이름은
+# Atlassian·벤더 문서 기준이고 이 인스턴스에서 렌더링으로 확인하지는 않았다.
+# 빈 집합은 범위를 줄 수 없는 것이다(space 전체 색인).
+QUERY = {
+    "recently-updated": {"spaces"},
+    "contentbylabel": {"spaces", "cql"},
+    "tasks-report-macro": {"spaces", "spaceAndPage", "pages"},
+    "detailssummary": {"spaces", "cql"},
+    "livesearch": {"spaceKey"},
+    "blog-posts": {"spaces"},
+    "popular-labels": {"spaceKey"},
+    "listlabels": {"spaceKey"},
+    "content-reporter": {"spaces", "scope"},
+    "page-index": set(),
+    "index": set(),
+}
+# cql 은 이런 조건이 있어야 범위가 있는 것으로 본다. 저장 때 서버가 labels 만으로
+# `label = "…"` cql 을 만들어 붙이는데(P6), 그것만으로는 인스턴스 전체다.
+CQL_SCOPE = re.compile(r"\b(space|ancestor|parent|id)\s*(=|in\b)|currentSpace\(\)", re.I)
 # probe 대상은 아니지만 사내 기존 페이지에서 렌더링되는 것을 확인한 플러그인 매크로.
 # 기존 페이지를 개정하려면 그대로 옮겨야 하므로 막지 않되, 근거가 probe가 아님을 밝힌다.
 # P6(2026-10-02)에서 저장 후 다시 읽어 설치(등록)된 것을 확인한 매크로도 여기 둔다 —
@@ -106,6 +122,8 @@ errors, warns = [], []
 probe_mode = "--probe" in sys.argv[1:]
 # 이어 붙일 페이지가 본문을 h1 부터 쓰는 관례일 때. SKILL.md 6단계.
 h1_mode = "--h1" in sys.argv[1:]
+# 개정하는 페이지에 원래 있던 범위 없는 조회형 매크로를 그대로 옮길 때.
+keep_query = "--keep-query" in sys.argv[1:]
 
 
 def err(msg):
@@ -223,6 +241,34 @@ def check_cdata_head(el, name):
              + (f" (`{first}`)" if first else ""))
 
 
+def check_query(el, name):
+    """조회형 매크로는 범위를 명시해야 한다. 기본 범위는 매크로마다 다르다."""
+    allowed = QUERY[name]
+    scoped = []
+    for p in el.findall(f"{{{NS['ac']}}}parameter"):
+        pname = p.get(f"{{{NS['ac']}}}name", "")
+        value = "".join(p.itertext()).strip()
+        if pname not in allowed or not (value or len(p)):
+            continue
+        if pname == "cql" and not CQL_SCOPE.search(value):
+            continue
+        scoped.append(pname)
+    if scoped:
+        warn(f"매크로 `{name}`: 조회형이다. 사용자가 요청했을 때만 쓴다 — 범위"
+             f"(`{'`, `'.join(scoped)}`)가 의도한 곳인지 확인한다")
+    elif keep_query or probe_mode:
+        warn(f"매크로 `{name}`: 범위 없는 조회형이다. 기존 페이지에 있던 것이라 그대로 둔다"
+             f"(--keep-query)")
+    elif not allowed:
+        err(f"매크로 `{name}`: 범위를 줄 수 없는 조회형이다(space 전체를 훑는다). 쓰지 않는다")
+    else:
+        err(f"매크로 `{name}`: 조회형인데 범위를 정하지 않았다 — 기본 범위는 매크로마다 "
+            f"다르고 인스턴스 전체일 수 있다. "
+            f"`{'` / `'.join(sorted(allowed))}` 로 범위를 준다"
+            + (" (cql 은 space·ancestor 조건이 있어야 한다)" if "cql" in allowed else "")
+            + ". 개정하는 페이지에 원래 있던 것이면 --keep-query")
+
+
 def check_plantuml(src):
     """PlantUML 본문을 1.2024.8 에서 안전한 부분집합으로 좁힌다."""
     if src != src.lstrip():
@@ -300,8 +346,7 @@ def main(path):
             elif name in CONDITIONAL:
                 warn(f"매크로 `{name}`: {CONDITIONAL[name]}")
             elif name in QUERY:
-                warn(f"매크로 `{name}`: 조회형이다. 페이지를 열 때마다 서버에서 검색을 "
-                     f"돌린다 — 새로 넣지 않는다. 기존 페이지에 있던 것만 둔다")
+                check_query(el, name)
             elif name in IN_USE:
                 warn(f"매크로 `{name}`: {IN_USE[name]} — 기존 페이지에서 확인, "
                      f"probe 대상은 아니다. 새로 넣지 않는다")
@@ -392,7 +437,7 @@ def report():
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a not in ("--probe", "--h1")]
+    args = [a for a in sys.argv[1:] if a not in ("--probe", "--h1", "--keep-query")]
     if len(args) != 1:
-        sys.exit("usage: check.py [--probe] [--h1] <file.xhtml>")
+        sys.exit("usage: check.py [--probe] [--h1] [--keep-query] <file.xhtml>")
     main(args[0])

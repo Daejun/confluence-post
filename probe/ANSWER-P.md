@@ -126,8 +126,11 @@ Confluence MCP 의 `create_page` 로 테스트 페이지를 만들고, `get_page
 실제 페이지에서 쓰이는 매크로 이름을 모아, 확인 안 된 것 35종을 한 페이지에 넣고 MCP 로
 올린 뒤 다시 읽었다. **이 페이지는 열리지 않았다.** 범위 없이 넣은 조회형 매크로
 (content-reporter, tasks-report-macro, detailssummary, contentbylabel, livesearch, report-*)
-가 페이지를 열 때마다 서버 검색을 돌린 것으로 본다. 페이지는 지웠고, 원본 파일도 저장소에
-두지 않는다. **조회형 매크로는 시험으로도 넣지 않는다.**
+가 페이지를 열 때마다 서버 검색을 돌린 것으로 본다 — **원인을 따로 떼어 확인하지는 않았다.**
+같은 날 조사 중에도 502 가 잦았고, 커스텀 매크로 30여 개와 자기 페이지를 가리키는
+multiexcerpt-include 가 함께 있었다. 페이지는 지웠고, 원본 파일도 저장소에 두지 않는다.
+**조회형 매크로는 시험으로 넣지 않는다.** 스킬에서는 사용자가 요청했을 때만 범위를 정해
+쓰게 했다.
 
 ## 다시 읽어서 안 것 (렌더링은 못 봤다)
 
@@ -157,10 +160,11 @@ Confluence MCP 의 `create_page` 로 테스트 페이지를 만들고, `get_page
 
 ## 반영된 곳
 
-- `plugins/confluence-post/skills/post/SKILL.md` — 조회형·커스텀 매크로는 새로 넣지 않는다,
-  접근 제한 페이지는 내용을 요청하지 않는다
+- `plugins/confluence-post/skills/post/SKILL.md` — 조회형은 요청 시 범위를 정해서만, 커스텀
+  매크로는 새로 넣지 않는다, 접근 제한 페이지는 내용을 요청하지 않는다
 - `plugins/confluence-post/skills/post/reference/existing-page.md` — 호출 수와 재시도,
   게시 실패·저장 시 바뀌는 것, 첨부 한도, minor edit
 - `plugins/confluence-post/skills/post/reference/storage-format.md` — 매뉴얼 규칙, 쓰지 않는 것
-- `plugins/confluence-post/skills/post/scripts/check.py` — QUERY, IN_USE 확장, NEEDS_ATTACHMENT,
-  column·excerpt·profile 검사, lucidchart·iframe 미설치
+- `plugins/confluence-post/skills/post/scripts/check.py` — QUERY(범위 없으면 ERROR,
+  `--keep-query`), IN_USE 확장, NEEDS_ATTACHMENT, column·excerpt·profile 검사,
+  lucidchart·iframe 미설치

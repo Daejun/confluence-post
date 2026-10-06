@@ -39,10 +39,14 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 `noformat` `anchor` `plantuml` `latex` `attachments`
 `excerpt` `children` `pagetree` `include` `details` `section` `column` `chart`
 
-**조회형 매크로는 새로 넣지 않는다** — `recently-updated` `contentbylabel`
-`tasks-report-macro` `detailssummary` `livesearch` `content-reporter` `report-table` 등은
-페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가 열리지
-않았다. 기존 페이지에 있던 것만 그대로 둔다(check.py WARN).
+**조회형 매크로는 사용자가 요청했을 때만, 범위를 정해서 넣는다** — `recently-updated`
+`contentbylabel` `tasks-report-macro` `detailssummary` `livesearch` `content-reporter` 등은
+페이지를 볼 때마다 검색을 돌린다. 범위(space·상위 페이지)를 정하지 않으면 기본값을
+따르는데, 매크로마다 달라 인스턴스 전체가 될 수 있다. markdown 에는 대응이 없으니 변환할
+때 스스로 만들지 않는다. 범위 없이 여럿 넣은 시험 페이지가 열리지 않은 일이 있었다 —
+원인을 따로 떼어 확인하지는 않았다. 쓰는 법은 `reference/storage-format.md` 의 조회형 절.
+check.py 는 범위가 없으면 ERROR, 있으면 WARN 이다. 개정하는 페이지에 원래 있던 범위 없는
+것은 고치지 않고 `--keep-query` 로 둔다.
 
 **커스텀 매크로도 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·
 html 등 설치는 돼 있지만 렌더링과 파라미터를 확인하지 않았다. 기존 페이지에 있던 것만

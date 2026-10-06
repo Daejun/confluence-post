@@ -196,11 +196,15 @@ out/mtfs-zone-bench.xhtml: 142줄, 6,318자
 `toc` `status` `noformat` `anchor` `plantuml` `latex` `attachments`
 `excerpt` `children` `pagetree` `include` `details` `section` `column` `chart`
 
-**새로 넣지 않는 매크로** — 조회형(`recently-updated` `contentbylabel`
-`tasks-report-macro` `detailssummary` `livesearch` `report-*` 등)은 페이지를 열 때마다
-서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험 페이지가 열리지 않았다. 커스텀
-매크로(ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·html 등)는 설치는 돼 있지만
-렌더링을 확인하지 않았다. 둘 다 기존 페이지에 있던 것만 그대로 옮긴다.
+**조회형 매크로는 요청이 있을 때만, 범위를 정해서** — `recently-updated`
+`contentbylabel` `tasks-report-macro` `detailssummary` `livesearch` 등은 페이지를 볼 때마다
+검색을 돌리고, 범위를 정하지 않으면 인스턴스 전체가 될 수 있다. 사용자가 요청했을 때만
+space·상위 페이지로 범위를 정해 넣는다. 범위가 없으면 check.py 가 ERROR 로 막는다.
+범위 없이 여럿 넣은 시험 페이지가 열리지 않은 일이 있었다(원인을 따로 떼어 확인하지는
+않았다).
+
+**커스텀 매크로는 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·
+html 등은 설치는 돼 있지만 렌더링을 확인하지 않았다. 기존 페이지에 있던 것만 옮긴다.
 
 **쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`.
 저장하면 Confluence 가 `<ac:macro>` 로 바꾸고 본문을 지운다. check.py 가 ERROR로 막는다.
@@ -257,6 +261,8 @@ OK
 
 `--probe` 는 미확인 매크로를 ERROR 대신 WARN으로 낮춘다. probe 페이지 전용이다.
 `--h1` 은 본문을 h1 부터 쓰는 페이지에 이어 붙일 때 준다. h1 WARN 을 끈다.
+`--keep-query` 는 개정하는 페이지에 원래 있던 범위 없는 조회형 매크로를 그대로 옮길 때 준다.
+ERROR 를 WARN 으로 낮춘다.
 
 ```bash
 python3 .../scripts/check.py --probe probe/P1-languages.xhtml

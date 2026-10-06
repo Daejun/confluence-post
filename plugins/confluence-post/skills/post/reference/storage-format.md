@@ -248,16 +248,47 @@ markdown 에는 대응이 없어 변환할 때 새로 만들지는 않는다. �
 - children 은 `page` 를 빼면 이 페이지의 하위를 보여 준다. pagetree 는 깊이만 제한할 수
   있고 개수는 못 막는다 — 하위가 많은 페이지를 root 로 잡지 않는다.
 
+## 조회형 매크로 — 요청이 있을 때만, 범위를 정해서
+
+페이지를 볼 때마다 검색을 돌리는 매크로다. 범위를 정하지 않으면 기본값을 따르는데, 매크로마다
+달라 인스턴스 전체가 될 수 있다. markdown 에는 대응이 없으니 변환할 때 스스로 만들지 않는다.
+사용자가 "이 space 의 최근 변경", "weekly 라벨 페이지 목록" 처럼 요청했을 때만 넣고, **범위를
+꼭 정한다.**
+
+범위 없이 여럿 넣은 시험 페이지가 열리지 않은 일이 있었다. 원인을 따로 떼어 확인하지는
+않았지만, 그 페이지의 contentbylabel 은 저장 때 서버가 `cql` 을 `label = "…"` 로만 만들어
+붙였다 — space 조건이 없으니 인스턴스 전체다.
+
+| 매크로 | 범위를 정하는 파라미터 |
+|---|---|
+| `recently-updated` `blog-posts` | `spaces` |
+| `contentbylabel` `detailssummary` | `cql` 에 `space = currentSpace()` 나 `ancestor = <ID>` 를 넣는다. 또는 `spaces` |
+| `tasks-report-macro` | `spaces` `spaceAndPage` `pages` |
+| `livesearch` `popular-labels` `listlabels` | `spaceKey` |
+| `content-reporter` | `spaces` `scope` |
+| `page-index` `index` | 범위를 정할 수 없다(space 전체를 훑는다). 쓰지 않는다 |
+
+파라미터 이름은 Atlassian·벤더 문서 기준이다. 이 인스턴스에서 렌더링으로 확인하지는 않았다.
+
+```xml
+<!-- 이 space 에서 weekly 라벨이 붙은 페이지 -->
+<ac:structured-macro ac:name="contentbylabel"><ac:parameter ac:name="cql">label = "weekly" and space = currentSpace()</ac:parameter></ac:structured-macro>
+<!-- 한 space 의 최근 변경 -->
+<ac:structured-macro ac:name="recently-updated"><ac:parameter ac:name="spaces"><ri:space ri:space-key="KEY"/></ac:parameter><ac:parameter ac:name="max">10</ac:parameter></ac:structured-macro>
+```
+
+- check.py 는 범위가 없으면 ERROR, 있으면 WARN 이다. WARN 은 "요청받았다, 범위는 여기다"를
+  초안에 적고 넘긴다.
+- 한 페이지에 여러 개 넣지 않는다.
+- 개정하는 페이지에 원래 있던 범위 없는 조회형 매크로는 고치지 않고 그대로 둔다 —
+  `check.py --keep-query`. 범위를 넣을지는 사용자에게 알린다.
+- 서버에 시험 삼아 넣어 보지 않는다.
+
 ## 쓰지 않는 것
 
 - ASCII 도식 — 전역 게시물 규칙에서 금지. 표나 문장, 또는 PlantUML로 바꾼다.
 - `mermaid` `mermaid-cloud` `mathblock` `gliffy` — 렌더링되지 않는 것을 확인했다.
   저장하면 `<ac:macro>` 로 바뀌고 본문이 지워진다.
-- **조회형 매크로** — `recently-updated` `contentbylabel` `tasks-report-macro`
-  `detailssummary` `livesearch` `blog-posts` `page-index` `index` `content-reporter`
-  `report-table` 등. 페이지를 열 때마다 서버에서 검색을 돌린다. 범위 없이 여럿 넣은 시험
-  페이지가 열리지 않았다. 새로 넣지 않고, 기존 페이지에 있던 것만 그대로 둔다.
-  check.py 가 WARN 으로 알린다.
 - `html` — 설치돼 있으나 쓰지 않는다. 사내 매뉴얼이 외부 리소스와 과한 CSS 를 비권장하고,
   사이드바에는 절대 넣지 말라고 한다. 기존 페이지에 있던 것은 그대로 둔다.
 - 커스텀 매크로(ui-tabs·ui-expand·divbox·multiexcerpt·table-filter 등) — 설치는 돼 있지만
