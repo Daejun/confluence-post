@@ -143,6 +143,16 @@ work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
 기존 페이지를 고치거나 그 아래에 새로 쓸 거면 페이지 URL 을 같이 준다. MCP 로 그
 페이지를 읽어 제목 단계·toc·code 파라미터 관례를 맞춘다.
 
+**HTML 을 주면 원본처럼 보이게 옮긴다.** 한장 정리 HTML(색 변수와 SVG 도식이 든 것)을
+가리키면 글은 Confluence 본문으로, 원본 CSS 는 이 페이지 본문에만 걸리는 `<style>` 하나로,
+SVG 도식은 `html` 매크로로 옮긴다. 글은 검색되고 에디터로 고칠 수 있으며, `html` 매크로가
+막혀도 글은 남는다. 한장 정리 템플릿은 `scripts/html2storage.py` 가 그대로 옮긴다.
+자세한 것은 `reference/html-input.md`.
+
+```
+analysis/01-storage-phases.html 컨플루언스에 원본처럼 올려줘
+```
+
 ### 2. 초안을 확인한다
 
 XHTML 원문을 쏟아내지 않고, 렌더링될 내용을 읽기 좋은 형태로 보여준다. 고칠 곳을
@@ -203,8 +213,11 @@ space·상위 페이지로 범위를 정해 넣는다. 범위가 없으면 check
 범위 없이 여럿 넣은 시험 페이지가 열리지 않은 일이 있었다(원인을 따로 떼어 확인하지는
 않았다).
 
-**커스텀 매크로는 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·
-html 등은 설치는 돼 있지만 렌더링을 확인하지 않았다. 기존 페이지에 있던 것만 옮긴다.
+**커스텀 매크로는 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter
+등은 설치는 돼 있지만 렌더링을 확인하지 않았다. 기존 페이지에 있던 것만 옮긴다.
+
+**`html` 매크로는 HTML 입력일 때만** — 렌더링은 확인했다(2026-11-12). 사내 매뉴얼이 외부
+리소스와 과한 CSS 를 비권장하므로 페이지 범위 `<style>` 하나와 SVG 도식에만 쓴다.
 
 **쓸 수 없는 매크로** — `mermaid` `mermaid-cloud` `mathblock` `gliffy`.
 저장하면 Confluence 가 `<ac:macro>` 로 바꾸고 본문을 지운다. check.py 가 ERROR로 막는다.
@@ -263,6 +276,9 @@ OK
 `--h1` 은 본문을 h1 부터 쓰는 페이지에 이어 붙일 때 준다. h1 WARN 을 끈다.
 `--keep-query` 는 개정하는 페이지에 원래 있던 범위 없는 조회형 매크로를 그대로 옮길 때 준다.
 ERROR 를 WARN 으로 낮춘다.
+`--html-input` 은 HTML 을 옮긴 조각에 준다. `html` 매크로를 style 하나와 SVG 도식으로만
+허용하고, `#main-content` 밖에 걸리는 CSS, 외부 리소스, script·iframe, 풀리지 않은 CSS 색
+변수, style 속성 안의 깨진 따옴표를 ERROR 로 막는다.
 
 ```bash
 python3 .../scripts/check.py --probe probe/P1-languages.xhtml
@@ -278,8 +294,10 @@ python3 .../scripts/check.py --probe probe/P1-languages.xhtml
 | `.../reference/storage-format.md` | markdown → storage format 매핑 |
 | `.../reference/plantuml.md` | PlantUML 문법 규칙과 쓰지 않는 것 |
 | `.../reference/existing-page.md` | MCP 로 기존 페이지 읽기, 옮기면 안 되는 자리, 게시 |
+| `.../reference/html-input.md` | HTML 입력을 원본처럼 옮기는 경로 (본문 + 페이지 범위 style + SVG 도식) |
 | `.../reference/example.xhtml` | 완성된 예시 (벤치 보고 한 장) |
 | `.../scripts/check.py` | 조각 검사기. 넣기 전에 돌린다 |
+| `.../scripts/html2storage.py` | 한장 정리 HTML → storage format 변환기 |
 | `probe/ANSWER.md` | 1차 실측 응답표 |
 | `probe/ANSWER-P.md` | 2차 응답표 — P1~P3, P5 렌더링 결과 |
 | `probe/P1-languages.xhtml` | code 언어 22종 + 대조군 |

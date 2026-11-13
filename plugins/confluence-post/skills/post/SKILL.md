@@ -1,6 +1,6 @@
 ---
 name: post
-description: 사내 Confluence(Data Center)에 올릴 문서를 storage format(XHTML)으로 만든다. 기존 markdown을 변환하거나 처음부터 작성해 Edit Source에 그대로 넣을 조각 파일을 내고, Confluence MCP가 있으면 그 파일로 페이지를 만들거나 고친다. Use when the user asks to write or convert a document for 사내 컨플루언스/Confluence, says "컨플루언스에 올릴 것", "컨플루언스 문법으로 바꿔줘", or asks to prepare a page for Confluence DC.
+description: 사내 Confluence(Data Center)에 올릴 문서를 storage format(XHTML)으로 만든다. 기존 markdown을 변환하거나 처음부터 작성해 Edit Source에 그대로 넣을 조각 파일을 내고, Confluence MCP가 있으면 그 파일로 페이지를 만들거나 고친다. 입력이 HTML(한장 정리 등)이면 글은 Confluence 본문으로, 원본 CSS 는 페이지 범위 style 하나로, SVG 도식은 html 매크로로 옮겨 원본처럼 보이게 한다. Use when the user asks to write or convert a document for 사내 컨플루언스/Confluence, says "컨플루언스에 올릴 것", "컨플루언스 문법으로 바꿔줘", "이 html 컨플루언스에 올려줘", or asks to prepare a page for Confluence DC.
 ---
 
 # 사내 Confluence 게시물 만들기
@@ -48,9 +48,16 @@ probe로 직접 렌더링해 확인한 것. 추측이 아니다.
 check.py 는 범위가 없으면 ERROR, 있으면 WARN 이다. 개정하는 페이지에 원래 있던 범위 없는
 것은 고치지 않고 `--keep-query` 로 둔다.
 
-**커스텀 매크로도 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter·
-html 등 설치는 돼 있지만 렌더링과 파라미터를 확인하지 않았다. 기존 페이지에 있던 것만
+**커스텀 매크로도 새로 넣지 않는다** — ui-tabs·ui-expand·divbox·multiexcerpt·table-filter
+등 설치는 돼 있지만 렌더링과 파라미터를 확인하지 않았다. 기존 페이지에 있던 것만
 옮긴다. 확인되지 않은 매크로를 서버에 넣어 시험하지 않는다.
+
+**`html` 매크로는 HTML 입력일 때만 새로 넣는다** — 렌더링은 확인했다(2026-11-12:
+`<style>`, inline SVG, `<script>`, `<iframe srcdoc>` 가 그려졌다). 사내 매뉴얼이 외부
+리소스와 과한 CSS 를 비권장하므로, 입력이 HTML 일 때 **페이지 범위 `<style>` 하나와 SVG
+도식**에만 쓴다. 그 밖의 문서에는 넣지 않는다. `reference/html-input.md`.
+`panel` 의 `borderColor` `bgColor` `borderStyle` `borderWidth` 와 `status` 의 `subtle` 도
+그려지는 것을 같은 때 확인했다.
 
 **쓸 수 없는 매크로 (렌더링 안 되는 것을 확인)**
 `mermaid` `mermaid-cloud` `mathblock` `gliffy`. 넣고 저장하면 Confluence 가
@@ -111,6 +118,9 @@ A -> B: write
 1. **입력을 정한다.** 변환할 markdown 파일 경로가 있으면 읽는다. 없으면 새로 쓴다.
    어느 쪽인지 한 줄로 밝히고 시작한다. 고칠 페이지나 올릴 부모 페이지의 URL 을
    받았으면 그것도 적어 둔다 — 6단계에서 읽고 9단계에서 올린다.
+   **입력이 HTML 이면 `reference/html-input.md` 를 읽고 그 경로로 간다.** 같은 내용의
+   markdown 이 옆에 있어도, 사용자가 HTML 을 가리켰으면 HTML 을 옮긴다 — 원본처럼 보이는
+   것이 요청이다. 문서 유형(2단계)은 원본이 이미 정한 것이므로 줄이지 않고 그대로 옮긴다.
 
 2. **문서 유형을 정하고 그 기준으로 줄인다.** 전역 CLAUDE.md의 "게시물" 규칙이
    적용되지만, 유형에 따라 근거로 볼 것이 갈린다.
@@ -137,6 +147,8 @@ A -> B: write
 3. **변환한다.** 매핑은 `reference/storage-format.md`, 완성된 예시는
    `reference/example.xhtml`. 외우지 말고 두 파일을 읽는다.
    위 "확정된 환경" 에 없는 매크로·언어는 쓰지 않는다.
+   HTML 입력이면 `scripts/html2storage.py` 로 옮긴다(한장 정리 템플릿). 모르는 요소에서
+   멈추면 그 자리만 `reference/html-input.md` 의 대응표대로 손으로 옮긴다.
 
 4. **`out/<slug>.xhtml` 에 쓴다.** 기준은 **현재 작업 디렉터리**다 — 원본 markdown이
    있는 곳도, 스킬이 설치된 곳도 아니다. slug은 영문 kebab-case.
@@ -150,6 +162,8 @@ A -> B: write
    python3 "$CHECK" out/<slug>.xhtml
    ```
    이어 붙일 페이지가 본문을 h1 부터 쓰면 `--h1` 을 준다(6단계에서 확인한 관례).
+   HTML 입력이면 `--html-input` 을 준다 — `html` 매크로를 style 하나와 SVG 도식으로만
+   허용하고, 범위 밖 CSS·외부 리소스·script·깨진 속성 따옴표를 ERROR 로 막는다.
    ERROR가 하나라도 있으면 고쳐서 다시 돌린다. 통과하지 않은 것을 사용자에게 주지 않는다.
    WARN 은 막지 않지만 그냥 넘기지 않는다 — 제목 단계 WARN 은 절 구분이 어긋났다는
    신호다. 고치거나, 그대로 두는 이유를 초안에 적는다.
@@ -233,6 +247,9 @@ A -> B: write
   있었고 감싸서 고쳐졌다. probe 에서는 감싸지 않아도 줄이 나뉘었으니 원인은 따로
   있지만, 감싸도 렌더링은 같으므로 감싸 둔다. **PlantUML 만** 감싼다.
   code·expand·info 는 감싸지 않는다. `reference/plantuml.md` 참조.
+- **HTML 입력의 style 속성 안에 큰따옴표를 쓰지 않는다.** `style="font-family:"IBM …""` 는
+  속성이 거기서 끊기고 브라우저가 소리 없이 버린다. 글꼴 이름은 작은따옴표로 쓴다.
+  `reference/html-input.md`.
 - **CDATA 안을 들여쓰지 않는다.** 요소 사이 들여쓰기는 렌더링에 영향이 없지만,
   CDATA 안의 공백은 코드 내용 그 자체다. `<![CDATA[` 바로 뒤부터 내용을 시작하고
   `]]>` 는 마지막 줄 끝에 붙인다. 코드 자체의 들여쓰기(커널이면 탭)는 그대로 살린다.

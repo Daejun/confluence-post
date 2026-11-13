@@ -18,8 +18,9 @@ CONFIRMED = {"code", "expand", "info", "note", "warning", "tip", "panel",
 CONDITIONAL = {
     "jira": "실제 이슈 키로만 렌더링된다. 없는 키는 오류가 난다",
     "drawio": "설치돼 있으나 에디터에서 그려야 한다. XHTML로 저작할 수 없다",
-    "html": "설치돼 있으나 쓰지 않는다. 사내 매뉴얼이 외부 리소스·과한 CSS 를 비권장한다. "
-            "기존 페이지에 있던 것만 둔다",
+    "html": "렌더링은 된다(2026-11-12 확인). 사내 매뉴얼이 외부 리소스·과한 CSS 를 비권장하므로 "
+            "HTML 입력 경로(--html-input, reference/html-input.md)에서만 새로 넣는다. "
+            "그 밖에는 기존 페이지에 있던 것만 둔다",
 }
 # 조회형. 페이지를 볼 때마다 검색을 돌린다. 범위를 정하지 않으면 기본값을 따르는데,
 # 매크로마다 달라 인스턴스 전체가 될 수 있다.
@@ -124,6 +125,9 @@ probe_mode = "--probe" in sys.argv[1:]
 h1_mode = "--h1" in sys.argv[1:]
 # 개정하는 페이지에 원래 있던 범위 없는 조회형 매크로를 그대로 옮길 때.
 keep_query = "--keep-query" in sys.argv[1:]
+# HTML 입력을 옮긴 조각. html 매크로를 페이지 범위 <style> 하나와 SVG 도식으로만 허용한다.
+html_input = "--html-input" in sys.argv[1:]
+WEBFONT_URL = "https://fonts.googleapis.com/css2?"
 
 
 def err(msg):
@@ -269,6 +273,61 @@ def check_query(el, name):
             + ". 개정하는 페이지에 원래 있던 것이면 --keep-query")
 
 
+CSS_RULE = re.compile(r"([^{}]+)\{[^{}]*\}")
+# style 속성 안에 큰따옴표가 또 들어가면(`font-family:"IBM Plex…"`) 속성이 거기서 끊기고
+# 나머지가 이름 없는 속성 조각이 된다. 브라우저는 오류 없이 그 스타일을 버린다.
+BROKEN_ATTR = re.compile(r'\b[\w-]+="[^"]*"[A-Za-z]')
+
+
+def check_html_macro(el, n):
+    """--html-input: html 매크로는 둘 중 하나만 허용한다.
+
+    style — 이 페이지 본문(#main-content)에만 걸리는 <style> 블록 하나. 매크로가 막혀도
+            글은 남는다.
+    figure — SVG 도식 하나와 그 설명. 색 변수는 실제 색으로 풀려 있어야 한다.
+    """
+    b = el.find(f"{{{NS['ac']}}}plain-text-body")
+    body = (b.text or "") if b is not None else ""
+    where = f"html 매크로 {n}번째"
+    low = body.lower()
+    for bad, why in (("<script", "script"), ("<iframe", "iframe"), ("<form", "form"),
+                     ("<input", "input")):
+        if bad in low:
+            err(f"{where}: <{why}> 를 넣지 않는다 — HTML 입력 경로는 style 과 SVG 도식만 쓴다")
+    m = BROKEN_ATTR.search(body)
+    if m:
+        err(f"{where}: 속성 따옴표가 깨졌다 (`{m.group(0)[:40]}…`) — style 안의 글꼴 이름은 "
+            f"작은따옴표로 쓴다")
+    for url in re.findall(r"https?://[^\s\"'<>)]+", body):
+        if url.startswith(WEBFONT_URL):
+            warn(f"{where}: 웹폰트를 외부에서 불러온다. 사내 매뉴얼이 외부 리소스를 비권장한다 — "
+                 f"막히면 대체 글꼴로 나온다")
+        elif not url.startswith("http://www.w3.org/"):
+            err(f"{where}: 외부 리소스 `{url[:60]}` 를 넣지 않는다")
+    if "<style" in low:
+        css = re.sub(r"/\*.*?\*/", "", body.split("<style", 1)[1].split(">", 1)[1]
+                     .split("</style>", 1)[0], flags=re.S)
+        if re.search(r"<svg", body, re.I):
+            err(f"{where}: style 블록과 SVG 를 한 매크로에 섞지 않는다")
+        for rule in CSS_RULE.finditer(css):
+            for sel in rule.group(1).split(","):
+                sel = sel.strip()
+                if sel and not sel.startswith("#main-content"):
+                    err(f"{where}: CSS 선택자 `{sel[:40]}` 가 #main-content 로 시작하지 않는다 — "
+                        f"Confluence 화면 전체(메뉴·사이드바)에 걸린다")
+        rest = re.sub(r"<link[^>]*>|<style.*?</style>", "", body, flags=re.S | re.I).strip()
+        if rest:
+            err(f"{where}: style 매크로에 style·link 말고 다른 내용이 있다 (`{rest[:40]}`)")
+        return "style"
+    if re.search(r"<svg", body, re.I):
+        if "var(--" in body:
+            err(f"{where}: SVG 에 CSS 색 변수(var(--…))가 남았다. Confluence 에는 그 변수가 "
+                f"없어 검게 나온다 — 실제 색으로 바꾼다")
+        return "figure"
+    err(f"{where}: style 블록도 SVG 도식도 아니다. HTML 입력 경로는 그 둘만 html 매크로로 넣는다")
+    return "other"
+
+
 def check_plantuml(src):
     """PlantUML 본문을 1.2024.8 에서 안전한 부분집합으로 좁힌다."""
     if src != src.lstrip():
@@ -310,14 +369,17 @@ def main(path):
 
     check_headings(raw)
 
+    # CDATA 안(code·html 매크로 본문)은 내용이므로 보지 않는다
+    masked = CDATA.sub(lambda m: " " * len(m.group(0)), raw)
     for bad, why in [("<!DOCTYPE", "조각에 DOCTYPE을 쓰지 않는다"),
                      ("<html", "조각에 <html>을 쓰지 않는다"),
                      ("<body", "조각에 <body>를 쓰지 않는다"),
-                     ("<style", "<style>은 무시된다")]:
-        m = re.search(re.escape(bad), raw, re.IGNORECASE)
+                     ("<style", "<style>은 무시된다 — 본문에 CSS 가 필요하면 HTML 입력 경로의 "
+                                "html 매크로(reference/html-input.md)")]:
+        m = re.search(re.escape(bad), masked, re.IGNORECASE)
         if m:
             err(f"{lineno(raw, m.start())}줄: {why}")
-    m = re.search(r"<thead\b", raw, re.IGNORECASE)
+    m = re.search(r"<thead\b", masked, re.IGNORECASE)
     if m:
         warn(f"{lineno(raw, m.start())}줄: <thead> 는 저장은 되지만 이 스킬은 <tbody> 안 "
              f"<tr><th> 로 통일한다. 기존 페이지에 있던 표면 그대로 둔다")
@@ -334,6 +396,7 @@ def main(path):
 
     parent = {c: p for p in root.iter() for c in p}
     images, task_ids, excerpts = [], [], 0
+    html_kinds = []
     for el in root.iter():
         tag = el.tag
         if el is not root and "}" not in tag and tag not in ALLOWED_TAGS:
@@ -343,6 +406,8 @@ def main(path):
             name = el.get(f"{{{NS['ac']}}}name", "")
             if name in CONFIRMED:
                 pass
+            elif name == "html" and html_input:
+                html_kinds.append(check_html_macro(el, len(html_kinds) + 1))
             elif name in CONDITIONAL:
                 warn(f"매크로 `{name}`: {CONDITIONAL[name]}")
             elif name in QUERY:
@@ -417,6 +482,14 @@ def main(path):
     if excerpts > 1:
         warn(f"excerpt 매크로가 {excerpts}개다. 사내 매뉴얼: 페이지에 하나만 — 끌어 쓰는 "
              f"쪽은 첫 번째만 인식한다")
+    if html_input:
+        styles = html_kinds.count("style")
+        if styles > 1:
+            err(f"style html 매크로가 {styles}개다. 페이지에 하나만 둔다")
+        if html_kinds and html_kinds[0] != "style" and styles:
+            warn("style html 매크로가 맨 앞에 있지 않다. 맨 앞에 두어야 본문이 그려지기 전에 "
+                 "CSS 가 걸린다")
+        print(f"html 매크로: style {styles}개, 도식 {html_kinds.count('figure')}개")
     dup = sorted({t for t in task_ids if task_ids.count(t) > 1})
     if dup:
         err(f"<ac:task-id> 가 겹친다: {', '.join(dup)}. 페이지 전체에서 겹치지 않게 매긴다")
@@ -437,7 +510,8 @@ def report():
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a not in ("--probe", "--h1", "--keep-query")]
+    args = [a for a in sys.argv[1:]
+            if a not in ("--probe", "--h1", "--keep-query", "--html-input")]
     if len(args) != 1:
-        sys.exit("usage: check.py [--probe] [--h1] [--keep-query] <file.xhtml>")
+        sys.exit("usage: check.py [--probe] [--h1] [--keep-query] [--html-input] <file.xhtml>")
     main(args[0])
