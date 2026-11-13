@@ -383,6 +383,13 @@ def main(path):
     if m:
         warn(f"{lineno(raw, m.start())}줄: <thead> 는 저장은 되지만 이 스킬은 <tbody> 안 "
              f"<tr><th> 로 통일한다. 기존 페이지에 있던 표면 그대로 둔다")
+    # 본문 style 속성의 font-size: `.78rem` `.86rem` 은 저장 때 지워졌고 px 는 남았다(2026-11-13).
+    # html 매크로(CDATA) 안은 저장 때 건드리지 않으므로 masked 로만 본다
+    for m in re.finditer(r"\bstyle=(\"[^\"]*\"|'[^']*')", masked):
+        for size in re.findall(r"font-size\s*:\s*([^;\"']+)", m.group(1)):
+            if not re.fullmatch(r"\d+(\.\d+)?px", size.strip()):
+                err(f"{lineno(raw, m.start())}줄: 본문 style 의 font-size `{size.strip()}` 는 "
+                    f"저장할 때 지워진다(.78rem 에서 확인) — px 로 쓴다")
 
     wrapped = ('<root xmlns:ac="http://x/ac" xmlns:ri="http://x/ri">'
                + neutralize(raw) + "</root>")

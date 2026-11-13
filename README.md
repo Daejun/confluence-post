@@ -146,7 +146,8 @@ work/bench/STATUS.md 컨플루언스에 올릴 문서로 바꿔줘
 **HTML 을 주면 원본처럼 보이게 옮긴다.** 한장 정리 HTML(색 변수와 SVG 도식이 든 것)을
 가리키면 글은 Confluence 본문으로, 원본 CSS 는 이 페이지 본문에만 걸리는 `<style>` 하나로,
 SVG 도식은 `html` 매크로로 옮긴다. 글은 검색되고 에디터로 고칠 수 있으며, `html` 매크로가
-막혀도 글은 남는다. 한장 정리 템플릿은 `scripts/html2storage.py` 가 그대로 옮긴다.
+막혀도 글은 남는다. 한장 정리 템플릿은 `scripts/html2storage.py` 가 그대로 옮긴다. 본문 폭은
+988px, 글꼴은 원본의 IBM Plex 웹폰트다(외부 리소스를 막아야 하면 `--no-webfont`).
 자세한 것은 `reference/html-input.md`.
 
 ```
@@ -268,6 +269,7 @@ OK
 
 잡아내는 것: 이스케이프 안 된 `&` 와 `<`, 알 수 없는 엔티티, 본문의 `]]>`, 깨진 XML,
 `<html>`·DOCTYPE, `<thead>`(WARN), `<li>` 밖의 중첩 목록, 확인 안 된 매크로,
+저장 때 지워지는 본문 `font-size`(px 가 아닌 값),
 미확인 code 언어, 제목 단계, `<p>` 밖의 PlantUML, MCP 조회 결과에서 그대로 옮긴
 첨부 이미지, 첨부가 필요한 이미지 목록. ERROR가 있으면 종료 코드 1이고,
 그 파일은 붙여넣지도 MCP 로 올리지도 않는다.

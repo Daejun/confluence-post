@@ -247,6 +247,9 @@ A -> B: write
   있었고 감싸서 고쳐졌다. probe 에서는 감싸지 않아도 줄이 나뉘었으니 원인은 따로
   있지만, 감싸도 렌더링은 같으므로 감싸 둔다. **PlantUML 만** 감싼다.
   code·expand·info 는 감싸지 않는다. `reference/plantuml.md` 참조.
+- **본문 span 의 `font-size` 는 px 로 쓴다.** `.86rem` 같은 rem 값은 저장할 때 Confluence 가
+  지운다 — 색만 남고 글씨는 본문 크기로 나온다. check.py 가 ERROR 로 막는다. html 매크로
+  (CDATA) 안은 그대로 남는다.
 - **HTML 입력의 style 속성 안에 큰따옴표를 쓰지 않는다.** `style="font-family:"IBM …""` 는
   속성이 거기서 끊기고 브라우저가 소리 없이 버린다. 글꼴 이름은 작은따옴표로 쓴다.
   `reference/html-input.md`.

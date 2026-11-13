@@ -27,6 +27,15 @@ figure·details·footer — 는 `scripts/html2storage.py` 가 그대로 옮긴�
 | 본문 + 도식만 `html` 매크로 | 구성은 같았지만 글꼴·글씨 크기·폭이 달랐다 (2026-11-13, page 4141483543 v1) |
 | 본문 + 도식 `html` + 페이지 범위 `<style>` | **사용자가 가장 낫다고 했다** (2026-11-13, page 4141483543 v2). 채택 |
 
+폭과 글씨는 다음 페이지(점수 계산, page 4141483804)에서 맞췄다.
+
+| 시도 | 결과 |
+|---|---|
+| 본문 폭 760px | 좁다고 했다. 912px, 1064px 로 넓혔다 |
+| 폭만 넓힘 | 페이지는 넓어졌는데 글 폭은 그대로였다 — 문단·목록의 `max-width:65ch` 때문. 뺐다 |
+| 맑은 고딕 | 원래 글꼴(IBM Plex)로 되돌려 달라고 했다 |
+| 1064px → **988px**, IBM Plex 웹폰트, 본문 span 글씨 크기 px | **사용자가 좋다고 했다** (2026-11-13, v6). 지금 기본값 |
+
 iframe 방식은 "원본과 글자 하나까지 같아야 하고 검색은 필요 없다"고 할 때만 쓴다. 그때는
 원본 HTML 을 `<script type="text/plain">` 에 넣고 script 로 `iframe.srcdoc` 에 옮긴다 —
 `srcdoc` 속성에 직접 넣으면 따옴표를 모두 `&quot;` 로 바꿔야 해 크기가 크게 는다.
@@ -41,6 +50,10 @@ check.py `--html-input` 은 script·iframe 을 막으므로 이 경우는 `--htm
   문서 전체에 적용되므로, `#main-content` 로 범위를 좁혀 본문만 꾸민다.
 - `panel` 의 `borderStyle` `borderColor` `borderWidth` `bgColor`, `status` 의 `subtle` 은
   저장되고 그려진다 (2026-11-13).
+- **본문 span 의 inline `font-size` 는 `.78rem` `.86rem` `.9rem` `.85rem` 이 저장할 때 지워졌다.**
+  색은 `rgb(…)` 로 바뀌어 남았고, `12.5px` `13.8px` 같은 px 값과 `letter-spacing:0.06em` 은
+  남았다 (2026-11-13). rem 단위 때문인지 앞의 0 이 없어서인지는 떼어 보지 않았다 — px 로 쓴다.
+  html 매크로(CDATA) 안은 저장 때 건드리지 않는다.
 - CSS 가 기대는 Confluence DOM class 이름은 아래와 같다. Confluence DC 의 일반적인 이름이고,
   페이지 전체가 원본처럼 보이는 것은 사용자가 확인했다. **규칙 하나하나를 따로 확인하지는
   않았다** — 어느 부분이 원본과 다르면 그 요소의 class 를 개발자 도구로 받아 고친다.
@@ -61,8 +74,11 @@ check.py `--html-input` 은 script·iframe 을 막으므로 이 경우는 `--htm
 
 - CSS 선택자는 모두 `#main-content` 로 시작한다. Confluence 메뉴·사이드바에 걸리지 않게 한다.
 - `<style>` 매크로는 페이지에 하나, 맨 앞에 둔다.
-- 외부 리소스를 넣지 않는다. 웹폰트(IBM Plex)는 `html2storage.py --webfont` 를 줄 때만
-  넣는다 — 기본은 대체 글꼴(Apple SD Gothic Neo, Malgun Gothic)로 나온다.
+- 외부 리소스는 웹폰트(IBM Plex, Google Fonts) 하나만 넣는다. 사용자가 원본 글꼴을 골랐다
+  (2026-11-13). check.py 가 WARN 으로 알리고, 막히면 대체 글꼴(Apple SD Gothic Neo, Malgun
+  Gothic)로 나온다. 외부 리소스를 막아야 하는 곳이면 `html2storage.py --no-webfont`.
+  글꼴 파일을 첨부해 직접 두는 방식은 쓰지 않는다 — 번거롭고, IBM Plex 는 OFL 의 Reserved Font
+  Name 이라 고친(subset 등) 파일을 같은 이름으로 배포할 수 없다.
 - `<script>` `<iframe>` `<form>` 을 넣지 않는다. 도식 매크로에는 SVG 와 그 설명만 둔다.
 - 사이드바·템플릿·다른 페이지에 넣지 않는다. 이 페이지 본문에만 둔다.
 
@@ -92,7 +108,7 @@ SKILL.md 의 순서를 따르되 3·5단계가 이렇게 바뀐다.
 
 | 원본 | storage format |
 |---|---|
-| `header .eyebrow` | `<p><span style="…mono, .78rem, uppercase…">` |
+| `header .eyebrow` | `<p><span style="…mono, 12.5px, uppercase…">` |
 | `header h1` | 쓰지 않는다 — 페이지 제목이 가져간다. 스크립트가 원본 제목을 찍어 준다 |
 | `.verdict` | `panel` (borderColor = accent, bgColor = surface). 굵은 글씨는 accent 색 span |
 | `.track li.done / .now / .wait / (없음)` | 한 문단에 `status` Green / Blue / Yellow / Grey+subtle |
@@ -102,11 +118,11 @@ SKILL.md 의 순서를 따르되 3·5단계가 이렇게 바뀐다.
 | `code`, `span.mono` | `<code>` |
 | `span.chip.good / .wait / .todo / .bad` | `status` Green / Yellow / Grey / Red |
 | `.tbl > table` (`thead` 포함) | `<table><tbody>` 안 `<tr><th>`. `colspan` `rowspan` 은 그대로 |
-| `p.note` | `<p><span style="color:muted;font-size:.9rem">` |
+| `p.note` | `<p><span style="color:muted;font-size:14.4px">` |
 | `figure` (SVG + figcaption) | `html` 매크로 하나: 테두리 상자 + SVG(색 변수를 실제 색으로) + 설명 |
-| `ol.steps` (n·t·small·chip) | 3열 표: 번호 / 제목 + 회색 설명 / `status` |
+| `ol.steps` (n·t·small·chip) | 3열 표: 번호 / 제목 + 회색 설명(13.8px) / `status` |
 | `details > summary` | `expand` (title = summary) |
-| `footer` | `<hr/>` + 회색 작은 글씨 문단. `--source` 를 끝에 붙인다 |
+| `footer` | `<hr/>` + 회색 작은 글씨 문단(13.6px). `--source` 를 끝에 붙인다 |
 | `a` | `<a href>` |
 
 ## 가장 틀리기 쉬운 자리
@@ -114,6 +130,11 @@ SKILL.md 의 순서를 따르되 3·5단계가 이렇게 바뀐다.
 - **style 속성 안의 큰따옴표.** `style="font-family:"IBM Plex Sans KR", …"` 는 속성이 첫
   `"` 에서 끊기고, 브라우저는 오류 없이 그 스타일을 버린다. 실제로 그림 설명 글꼴이 이렇게
   한 번 깨졌다. 속성 안의 글꼴 이름은 작은따옴표로 쓴다. check.py `--html-input` 이 잡는다.
+- **본문 span 의 글씨 크기는 px.** rem 으로 쓰면 저장할 때 크기만 지워지고 색은 남아, 작은 회색
+  글씨가 본문 크기로 나온다. 표 칸 안에서 줄이 엉뚱하게 바뀐다. check.py 가 px 가 아닌 본문
+  `font-size` 를 ERROR 로 막는다. 원본 CSS 의 rem 은 16 을 곱해 px 로 바꾼다.
+- **줄 길이 제한.** 원본의 `max-width:65ch` 같은 글 폭 제한을 문단·목록에 옮기면, 본문 폭을
+  늘려도 글이 그 폭에서 줄바꿈한다. 옮기지 않는다. 폭은 `#main-content` 하나로 정한다.
 - **CSS 색 변수.** 원본 SVG 의 `fill="var(--accent)"` 는 Confluence 에 그 변수가 없어
   검게 나온다. 실제 색으로 바꾼다. 원본의 밝은 화면 `:root` 값을 쓴다.
 - **다크 모드.** 원본 CSS 의 `prefers-color-scheme: dark` 규칙은 옮기지 않는다. Confluence

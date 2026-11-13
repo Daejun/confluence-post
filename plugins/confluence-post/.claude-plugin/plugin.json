@@ -1,6 +1,6 @@
 {
   "name": "confluence-post",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Confluence Data Center에 올릴 문서를 storage format(XHTML) 조각으로 만든다. Cloud의 fabric 에디터가 아닌 legacy 에디터 + storage format을 쓰는 DC를 대상으로 하며, wiki markup과 markdown insert 경로의 파서 함정을 우회한다. 실측으로 확인한 code 언어 23종과 매크로만 사용하고, 미설치 매크로·이스케이프 오류·CDATA 사고를 check.py가 막는다. Confluence MCP가 있으면 그 조각으로 페이지를 직접 만들거나 고친다.",
   "author": {
     "name": "Daejun",
