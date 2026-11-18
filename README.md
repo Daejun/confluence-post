@@ -282,6 +282,10 @@ ERROR 를 WARN 으로 낮춘다.
 허용하고, `#main-content` 밖에 걸리는 CSS, 외부 리소스, script·iframe, 풀리지 않은 CSS 색
 변수, style 속성 안의 깨진 따옴표를 ERROR 로 막는다.
 
+`--source-html <원본.html>` 은 옮기기 전 원본을 함께 준다. 원본의 style·도식 수와 조각을
+대조해, 겉모습을 버리고 본문만 Confluence 매크로로 다시 쓴 조각을 ERROR 로 잡는다. 그런
+조각은 이 대조 없이는 `style 0개, 도식 0개`로 그냥 통과한다(2026-11-18에 실제로 있었다).
+
 ```bash
 python3 .../scripts/check.py --probe probe/P1-languages.xhtml
 ```

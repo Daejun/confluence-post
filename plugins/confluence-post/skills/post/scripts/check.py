@@ -127,6 +127,13 @@ h1_mode = "--h1" in sys.argv[1:]
 keep_query = "--keep-query" in sys.argv[1:]
 # HTML 입력을 옮긴 조각. html 매크로를 페이지 범위 <style> 하나와 SVG 도식으로만 허용한다.
 html_input = "--html-input" in sys.argv[1:]
+# 옮기기 전의 원본 HTML. 주면 style·도식 수를 원본과 대조한다 — 본문만 Confluence 매크로로
+# 다시 쓴 조각은 그대로도 검사를 통과하므로(style 0, 도식 0), 원본이 있어야 잡힌다.
+source_html = None
+_argv = sys.argv[1:]
+for _i, _a in enumerate(_argv):
+    if _a == "--source-html" and _i + 1 < len(_argv):
+        source_html = _argv[_i + 1]
 WEBFONT_URL = "https://fonts.googleapis.com/css2?"
 
 
@@ -491,12 +498,34 @@ def main(path):
              f"쪽은 첫 번째만 인식한다")
     if html_input:
         styles = html_kinds.count("style")
+        figures = html_kinds.count("figure")
         if styles > 1:
             err(f"style html 매크로가 {styles}개다. 페이지에 하나만 둔다")
         if html_kinds and html_kinds[0] != "style" and styles:
             warn("style html 매크로가 맨 앞에 있지 않다. 맨 앞에 두어야 본문이 그려지기 전에 "
                  "CSS 가 걸린다")
-        print(f"html 매크로: style {styles}개, 도식 {html_kinds.count('figure')}개")
+        print(f"html 매크로: style {styles}개, 도식 {figures}개")
+        if source_html:
+            # 본문만 옮긴 조각은 여기서만 잡힌다. 원본과 수를 맞춘다.
+            try:
+                src = open(source_html, encoding="utf-8").read()
+            except OSError as e:
+                err(f"--source-html 파일을 읽지 못했다: {e}")
+                src = ""
+            if src:
+                src_styles = len(re.findall(r"<style\b", src, re.I))
+                src_figs = len(re.findall(r"<svg\b", src, re.I))
+                print(f"원본 HTML: style {src_styles}개, 도식 {src_figs}개")
+                if src_styles and styles == 0:
+                    err("원본 HTML 의 style 을 옮기지 않았다 — 본문을 Confluence 매크로로 다시 "
+                        "쓴 조각이다. 겉모습이 사라진다. html2storage.py 로 다시 만들거나 "
+                        "reference/html-input.md 의 style 매크로를 넣는다")
+                if figures != src_figs:
+                    err(f"도식이 원본과 다르다 (원본 {src_figs}개, 조각 {figures}개) — "
+                        f"SVG 도식은 html 매크로 하나씩 들어가야 한다")
+        elif styles == 0 and figures == 0:
+            warn("html 매크로가 하나도 없다 — 원본 HTML 을 옮긴 것이 맞는지 확인한다. 본문만 "
+                 "다시 쓴 조각이면 겉모습이 사라진다. `--source-html <원본.html>` 로 대조한다")
     dup = sorted({t for t in task_ids if task_ids.count(t) > 1})
     if dup:
         err(f"<ac:task-id> 가 겹친다: {', '.join(dup)}. 페이지 전체에서 겹치지 않게 매긴다")
@@ -517,8 +546,16 @@ def report():
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:]
-            if a not in ("--probe", "--h1", "--keep-query", "--html-input")]
+    flags = ("--probe", "--h1", "--keep-query", "--html-input")
+    args, skip = [], False
+    for a in sys.argv[1:]:
+        if skip:
+            skip = False
+        elif a == "--source-html":
+            skip = True
+        elif a not in flags:
+            args.append(a)
     if len(args) != 1:
-        sys.exit("usage: check.py [--probe] [--h1] [--keep-query] [--html-input] <file.xhtml>")
+        sys.exit("usage: check.py [--probe] [--h1] [--keep-query] [--html-input] "
+                 "[--source-html <원본.html>] <file.xhtml>")
     main(args[0])
